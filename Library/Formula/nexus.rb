@@ -1,22 +1,23 @@
-require 'formula'
-
 class Nexus < Formula
-  homepage 'http://www.sonatype.org/'
-  url 'http://download.sonatype.com/nexus/oss/nexus-2.11.0-02-bundle.tar.gz'
-  version '2.11.0-02'
-  sha1 '57a9414907574ee3d35a684f7a1b31469e1853e7'
+  desc "Repository manager for binary software components"
+  homepage "http://www.sonatype.org/"
+  url "https://sonatype-download.global.ssl.fastly.net/nexus/oss/nexus-2.12.0-01-bundle.tar.gz"
+  version "2.12.0-01"
+  sha256 "bf3c02ef9cdea0e854e0feba85d74f79215db04b692aebbaea37e4caf83c7fcc"
+
+  bottle :unneeded
 
   def install
-    rm_f Dir['bin/*.bat']
+    rm_f Dir["bin/*.bat"]
     # Put the sonatype-work directory in the var directory, to persist across version updates
     inreplace "nexus-#{version}/conf/nexus.properties",
-      'nexus-work=${bundleBasedir}/../sonatype-work/nexus',
+      "nexus-work=${bundleBasedir}/../sonatype-work/nexus",
       "nexus-work=#{var}/nexus"
     libexec.install Dir["nexus-#{version}/*"]
-    bin.install_symlink libexec/'bin/nexus'
+    bin.install_symlink libexec/"bin/nexus"
   end
 
-  plist_options :manual => "#{HOMEBREW_PREFIX}/opt/nexus/libexec/bin/nexus start"
+  plist_options :manual => "nexus start"
 
   def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>
@@ -35,5 +36,10 @@ class Nexus < Formula
       </dict>
     </plist>
     EOS
+  end
+
+  test do
+    output = `#{bin}/nexus status`
+    assert_match "Nexus OSS is", output
   end
 end

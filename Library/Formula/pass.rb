@@ -1,46 +1,29 @@
-require 'formula'
-
-class GpgRequirement < Requirement
-  fatal true
-  default_formula 'gnupg2'
-
-  satisfy do
-    %w(gpg gpg2).any? { |gpg| which gpg }
-  end
-
-  def message; <<-EOS.undent
-    pass requires GPG to be installed. Please install GPG in one of three ways:
-    - Install the gnupg2 package through Homebrew
-    - Install the gpgtools package through Homebrew Cask
-    - Download and install gpgtools from https://gpgtools.org/
-    EOS
-  end
-end
-
 class Pass < Formula
-  homepage 'http://www.passwordstore.org/'
-  url 'http://git.zx2c4.com/password-store/snapshot/password-store-1.6.3.tar.xz'
-  sha256 'd419d40aa165c1f893e994dd706733374a9db8cf5314124702a061e70e0340f7'
+  desc "Password manager"
+  homepage "https://www.passwordstore.org/"
+  url "https://git.zx2c4.com/password-store/snapshot/password-store-1.6.5.tar.xz"
+  sha256 "337a39767e6a8e69b2bcc549f27ff3915efacea57e5334c6068fcb72331d7315"
+  head "https://git.zx2c4.com/password-store", :using => :git
 
   bottle do
-    cellar :any
-    sha1 "c7c430873e8272725a8f0cab1b9c50371d3bf9e4" => :mavericks
-    sha1 "1eb5751288c8d4eb3dd5d3a75451e913d38ce0c1" => :mountain_lion
-    sha1 "289089c797ae46fe7ef93e4755f3847ecd38098c" => :lion
+    cellar :any_skip_relocation
+    revision 1
+    sha256 "41f0fe499d0d20df5962ef0f51b18445eacd26705d4c4eb2e2283fc8f911a6ca" => :el_capitan
+    sha256 "a304dad35621f226856262d16fb3045f3ba424c255ff434eed27ee4543cd93ed" => :yosemite
+    sha256 "ce1f893a53205dc65cd857025a54067a36e37468948922114c46602da66f1bb4" => :mavericks
   end
 
-  head 'http://git.zx2c4.com/password-store', :using => :git
-
-  depends_on 'pwgen'
-  depends_on 'tree'
-  depends_on 'gnu-getopt'
-  depends_on GpgRequirement
+  depends_on "pwgen"
+  depends_on "tree"
+  depends_on "gnu-getopt"
+  depends_on :gpg
 
   def install
-    system "make DESTDIR=#{prefix} PREFIX=/ install"
+    system "make", "PREFIX=#{prefix}", "install"
     share.install "contrib"
     zsh_completion.install "src/completion/pass.zsh-completion" => "_pass"
     bash_completion.install "src/completion/pass.bash-completion" => "password-store"
+    fish_completion.install "src/completion/pass.fish-completion" => "pass.fish"
   end
 
   test do

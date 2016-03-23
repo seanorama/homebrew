@@ -1,46 +1,49 @@
-require "formula"
-
 class Httpie < Formula
-  homepage "http://httpie.org"
-  url "https://github.com/jakubroztocil/httpie/archive/0.8.0.tar.gz"
-  sha1 "bfffe9d782a896ca57f3dafef3d02bf81a07e5a8"
+  desc "User-friendly cURL replacement (command-line HTTP client)"
+  homepage "http://httpie.org/"
+  url "https://github.com/jkbrzt/httpie/archive/0.9.3.tar.gz"
+  sha256 "2a0c7cf6a6914620eebc2d7700e8e7a57aabde62bd62cd7fa68f8b216c0b2340"
 
-  head "https://github.com/jakubroztocil/httpie.git"
+  head "https://github.com/jkbrzt/httpie.git"
 
   bottle do
-    cellar :any
+    cellar :any_skip_relocation
     revision 1
-    sha1 "22ddd11f67e37e7100ffd2e83cde865dbea86c5a" => :mavericks
-    sha1 "c401847c644005c08879ccb6ff165b6509b91d0f" => :mountain_lion
-    sha1 "c2b1509dad6a6bb8addca38292d152d2614e8aa9" => :lion
+    sha256 "da9d2546404582dbc63b2143f71945321f4c3aacca794991f04f6e19f97a8493" => :el_capitan
+    sha256 "6008745c55d89aaf134ab8bec17f2188746149e9904f5b25f6a96d3cb878f784" => :yosemite
+    sha256 "3c3722eea4f74303af705f3bfb85c5c259f557af8689f36e6579a951f716b686" => :mavericks
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
 
   resource "pygments" do
-    url "https://pypi.python.org/packages/source/P/Pygments/Pygments-1.6.tar.gz"
-    sha1 "53d831b83b1e4d4f16fec604057e70519f9f02fb"
+    url "https://pypi.python.org/packages/source/P/Pygments/Pygments-2.0.2.tar.gz"
+    sha256 "7320919084e6dac8f4540638a46447a3bd730fca172afc17d2c03eed22cf4f51"
   end
 
   resource "requests" do
-    url "https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz"
-    sha1 "f57bc125d35ec01a81afe89f97dc75913a927e65"
+    url "https://pypi.python.org/packages/source/r/requests/requests-2.9.1.tar.gz"
+    sha256 "c577815dd00f1394203fc44eb979724b098f88264a9ef898ee45b8e5e9cf587f"
   end
 
   def install
-    ENV.prepend_create_path "PYTHONPATH", libexec + "lib/python2.7/site-packages"
-    ENV.prepend_create_path "PYTHONPATH", prefix + "lib/python2.7/site-packages"
+    ENV.prepend_create_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
+    %w[pygments requests].each do |r|
+      resource(r).stage do
+        system "python", *Language::Python.setup_install_args(libexec/"vendor")
+      end
+    end
 
-    install_args = "setup.py", "install", "--prefix=#{libexec}"
-    resource("pygments").stage { system "python", *install_args }
-    resource("requests").stage { system "python", *install_args }
+    ENV.prepend_create_path "PYTHONPATH", libexec/"lib/python2.7/site-packages"
+    system "python", *Language::Python.setup_install_args(libexec)
 
-    system "python", "setup.py", "install", "--prefix=#{libexec}"
-
-    (bin/"http").write_env_script libexec/"bin/http", :PYTHONPATH => ENV["PYTHONPATH"]
+    bash_completion.install "httpie-completion.bash"
+    bin.install Dir["#{libexec}/bin/*"]
+    bin.env_script_all_files(libexec/"bin", :PYTHONPATH => ENV["PYTHONPATH"])
   end
 
   test do
-    system "#{bin}/http", "https://google.com"
+    assert_match "PYTHONPATH",
+      shell_output("#{bin}/http https://raw.githubusercontent.com/Homebrew/homebrew/master/Library/Formula/httpie.rb")
   end
 end

@@ -1,11 +1,12 @@
-require "formula"
-
 class ZshCompletions < Formula
+  desc "Additional completion definitions for zsh"
   homepage "https://github.com/zsh-users/zsh-completions"
-  url "https://github.com/zsh-users/zsh-completions/archive/0.11.0.tar.gz"
-  sha1 "d6b28c9d617e821cdd27f7e20c3ee9e97c7a958b"
+  url "https://github.com/zsh-users/zsh-completions/archive/0.17.0.tar.gz"
+  sha256 "e1797e22e2bbbe50bf61f88db43216c0aef53713c84373bafddf6090b1fe8f68"
 
   head "https://github.com/zsh-users/zsh-completions.git"
+
+  bottle :unneeded
 
   def install
     (share/"zsh-completions").install Dir["src/_*"]
@@ -24,7 +25,16 @@ class ZshCompletions < Formula
     Additionally, if you receive "zsh compinit: insecure directories" warnings when attempting
     to load these completions, you may need to run this:
 
-      chmod go-w /usr/local/share
+      chmod go-w '#{HOMEBREW_PREFIX}/share'
     EOS
+  end
+
+  test do
+    (testpath/".zshrc").write <<-EOS.undent
+      fpath=(#{HOMEBREW_PREFIX}/share/zsh-completions $fpath)
+      autoload -U compinit
+      compinit
+    EOS
+    system "/bin/zsh", "--login", "-i", "-c", "which _ack"
   end
 end

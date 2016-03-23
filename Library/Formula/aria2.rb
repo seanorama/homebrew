@@ -1,33 +1,23 @@
-require "formula"
-
 class Aria2 < Formula
+  desc "Download with resuming and segmented downloading"
   homepage "http://aria2.sourceforge.net/"
-  revision 1
-
-  stable do
-    url "https://downloads.sourceforge.net/project/aria2/stable/aria2-1.18.8/aria2-1.18.8.tar.bz2"
-    sha1 "b6ad7064b1ea769e78f6a7dc9787a12cfc1e153f"
-
-    # Upstream patch to fix crash on OSX when proxy is used
-    # See: https://github.com/tatsuhiro-t/aria2/commit/9a931e7
-    patch do
-      url "https://github.com/tatsuhiro-t/aria2/commit/9a931e7.diff"
-      sha1 "386c2a831e9ab91524a1af1eeb3037a819b85ec5"
-    end
-  end
+  url "https://github.com/tatsuhiro-t/aria2/releases/download/release-1.21.0/aria2-1.21.0.tar.xz"
+  sha256 "225c5f2c8acc899e0a802cdf198f82bd0d3282218e80cdce251b1f9ffacf6580"
 
   bottle do
-    cellar :any
-    sha1 "0bfe8bc96b7d95c0d45c9f84e725eb5eae64d1bf" => :yosemite
-    sha1 "1c8c6558e0016c7e1ac2f01485a676b28df8ac55" => :mavericks
-    sha1 "9199de445bcc3c9dd932781e96d1fa53dd7e922e" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "724b7aa74bd3e7cd470162adf27ab5bd1d1369a16108ddd5def2dc1ab99fac95" => :el_capitan
+    sha256 "83b3f974bc53c3b59f8bf32fc84c855e24e794e0e0350f7477b4773e6e6a2fa0" => :yosemite
+    sha256 "8fc117fbdf3470cf3be39573b0553728538742a45776dc6a3dbfedef30b430e1" => :mavericks
   end
 
   depends_on "pkg-config" => :build
+  depends_on "libssh2" => :optional
 
   needs :cxx11
 
   def install
+
     args = %W[
       --disable-dependency-tracking
       --prefix=#{prefix}
@@ -39,9 +29,16 @@ class Aria2 < Formula
       --without-libgcrypt
     ]
 
+    args << "--with-libssh2" if build.with? "libssh2"
+
     system "./configure", *args
     system "make", "install"
 
     bash_completion.install "doc/bash_completion/aria2c"
+  end
+
+  test do
+    system "#{bin}/aria2c", "http://brew.sh"
+    assert File.exist? "index.html"
   end
 end

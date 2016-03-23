@@ -1,15 +1,15 @@
-require "formula"
-
 class Powerman < Formula
-  homepage "http://code.google.com/p/powerman/"
+  desc "Control (remotely and in parallel) switched power distribution units"
+  homepage "https://code.google.com/p/powerman/"
   url "https://github.com/chaos/powerman/releases/download/2.3.20/powerman-2.3.20.tar.gz"
   sha256 "a4b0858d1214aab18e2673596b00ac9bad976cb7b777209e10732467c3551b88"
   revision 1
 
   bottle do
-    sha1 "8885a67eba6e20904ba15c10256738eb30d5a53d" => :yosemite
-    sha1 "a1ae6b1798c6b141a716d47d26e75882beb970fc" => :mavericks
-    sha1 "fc67de36f5e2035c61d0877bc1477886ab30ab35" => :mountain_lion
+    revision 1
+    sha256 "d66a3faf7b2e5e07a56a3160158a3d9dc8314a2ca0acd09ba7b8ecebd42fc9e9" => :yosemite
+    sha256 "ad709cbaf0eb057c18ca98a8c9215132785b3d9a751df89600c38059b7b12265" => :mavericks
+    sha256 "c801c9d90323a6817a144dd9bf24ea095642eff51cae2500451507a367701546" => :mountain_lion
   end
 
   head do

@@ -1,15 +1,15 @@
-require 'formula'
-
 class Boxes < Formula
-  homepage 'http://boxes.thomasjensen.com/'
-  url 'https://github.com/ascii-boxes/boxes/archive/v1.1.1.tar.gz'
-  head 'https://github.com/ascii-boxes/boxes.git'
-  sha1 'fff0d7636c50a4ffa88389981a3d32e8d7a83b39'
+  desc "Draw boxes around text"
+  homepage "http://boxes.thomasjensen.com/"
+  url "https://github.com/ascii-boxes/boxes/archive/v1.1.2.tar.gz"
+  sha256 "4d5e536be91b476ee48640bef9122f3114b16fe2da9b9906947308b94682c5fe"
+  head "https://github.com/ascii-boxes/boxes.git"
 
   bottle do
-    sha1 "6ace9ba08d5d1b528015598c5ed44b86c35c15f3" => :yosemite
-    sha1 "132294a712de399d24b7ebdc55ea611a1f9b0fe6" => :mavericks
-    sha1 "3078e1f6738312c3bc7b3c4a38043b037cc01fa0" => :mountain_lion
+    revision 1
+    sha256 "d5a5b256a1ef58a8d9c3d69c57c27bb8dd5c5e40e8979f877f83278ff38fd950" => :el_capitan
+    sha256 "ee8b2795856fafcfaad79356325d7e1cf6aaa02359cb9adf162df2028243f429" => :yosemite
+    sha256 "4d82f6e37b1e18d48a2198ca4301d901e4a6b55681ed8f0b65dddeee1148221e" => :mavericks
   end
 
   def install
@@ -20,12 +20,15 @@ class Boxes < Formula
       "GLOBALCONF=#{share}/boxes-config",
       "CC=#{ENV.cc}",
       # Force 32 bit compile
-      # These flags are only (as of 1.1.1) supported on HEAD
       "CFLAGS_ADDTL=-m32",
       "LDFLAGS_ADDTL=-m32"
 
-    bin.install 'src/boxes'
-    man1.install 'doc/boxes.1'
-    share.install 'boxes-config'
+    bin.install "src/boxes"
+    man1.install "doc/boxes.1"
+    share.install "boxes-config"
+  end
+
+  test do
+    assert_match "/* test brew */", pipe_output("#{bin}/boxes", "test brew")
   end
 end

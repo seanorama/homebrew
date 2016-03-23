@@ -1,22 +1,21 @@
-require 'formula'
-
 class Ykpers < Formula
-  homepage 'http://yubico.github.io/yubikey-personalization/'
-  url 'https://developers.yubico.com/yubikey-personalization/releases/ykpers-1.16.1.tar.gz'
-  sha1 'ff7cf92551ee06da198a2cccd29d55b388ce172b'
+  desc "YubiKey personalization library and tool"
+  homepage "https://developers.yubico.com/yubikey-personalization/"
+  url "https://developers.yubico.com/yubikey-personalization/Releases/ykpers-1.17.3.tar.gz"
+  sha256 "482fc3984fc659c801cfc51313268f248507094ed5224f4394cfd66e23af9c0c"
 
   bottle do
     cellar :any
-    sha1 "b8a65fc072e38b677064a6341b0d78a598f45bf4" => :yosemite
-    sha1 "f4e714cd3a13837431524f5610d9dc1dafce6e48" => :mavericks
-    sha1 "a74127ef74af9f3ac9220a69259aeb286da16b6c" => :mountain_lion
+    sha256 "61d466fe3b295a6b4a6a1642dc8f1a393e28a6e9705260cf4107e8ad62a8bcab" => :el_capitan
+    sha256 "b3b65497b0b754c40a4b72ba607f9cc8149400dc2b4a89debc9a752f8add51a9" => :yosemite
+    sha256 "708fcea4a38578c8dabe046c07d8705bb8d1874c8b389c46e2edd6bc4f8b1d5c" => :mavericks
   end
 
   option :universal
 
-  depends_on 'libyubikey'
-  depends_on 'json-c' => :recommended
-  depends_on 'pkg-config' => :build
+  depends_on "pkg-config" => :build
+  depends_on "libyubikey"
+  depends_on "json-c" => :recommended
 
   def install
     ENV.universal_binary if build.universal?
@@ -28,5 +27,9 @@ class Ykpers < Formula
                           "--with-backend=osx"
     system "make", "check"
     system "make", "install"
+  end
+
+  test do
+    assert_match "1.17.3", shell_output("#{bin}/ykinfo -V 2>&1")
   end
 end

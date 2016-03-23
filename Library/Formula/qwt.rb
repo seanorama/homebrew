@@ -1,15 +1,15 @@
-require "formula"
-
 class Qwt < Formula
+  desc "Qt Widgets for Technical Applications (v5.1)"
   homepage "http://qwt.sourceforge.net/"
-  url "https://downloads.sourceforge.net/project/qwt/qwt/6.1.1/qwt-6.1.1.tar.bz2"
-  sha1 "6d142cb9725da7e03fbb507532fc268b5212080a"
+  url "https://downloads.sourceforge.net/project/qwt/qwt/6.1.2/qwt-6.1.2.tar.bz2"
+  sha256 "2b08f18d1d3970e7c3c6096d850f17aea6b54459389731d3ce715d193e243d0c"
 
   bottle do
-    revision 1
-    sha1 "0700a69f236146d304991a7e40235eb295ecbdd3" => :yosemite
-    sha1 "b2ac42c6ef27b2347b2b5d32edc5a71c0e773f16" => :mavericks
-    sha1 "f3ca621e583256c9baae99e6aff689abe3bf8ccb" => :mountain_lion
+    cellar :any
+    revision 2
+    sha256 "0203eb8c150c368c97e00e607c2bbda1bf7bd50740a987ba59f6198a408a4fc6" => :el_capitan
+    sha256 "e855bb9cec6c3c2a1c977a1ec3719eaf5f032b8c8654919ed8c1cbbc22ab63c3" => :yosemite
+    sha256 "e5e240d5a1b148679d79b95216615bfb997a41be27d178d8b056e0be3ffab6cd" => :mavericks
   end
 
   option "with-qwtmathml", "Build the qwtmathml library"
@@ -25,11 +25,15 @@ class Qwt < Formula
     inreplace "qwtconfig.pri" do |s|
       s.gsub! /^\s*QWT_INSTALL_PREFIX\s*=(.*)$/, "QWT_INSTALL_PREFIX=#{prefix}"
       s.sub! /\+(=\s*QwtDesigner)/, "-\\1" if build.without? "plugin"
+
+      # Install Qt plugin in `lib/qt4/plugins/designer`, not `plugins/designer`.
+      s.sub! %r{(= \$\$\{QWT_INSTALL_PREFIX\})/(plugins/designer)$},
+             "\\1/lib/qt4/\\2"
     end
 
     args = ["-config", "release", "-spec"]
     # On Mavericks we want to target libc++, this requires a unsupported/macx-clang-libc++ flag
-    if ENV.compiler == :clang and MacOS.version >= :mavericks
+    if ENV.compiler == :clang && MacOS.version >= :mavericks
       args << "unsupported/macx-clang-libc++"
     else
       args << "macx-g++"
@@ -43,19 +47,20 @@ class Qwt < Formula
     system "qmake", *args
     system "make"
     system "make", "install"
-
-    # symlink Qt Designer plugin (note: not removed on qwt formula uninstall)
-    ln_sf prefix/"plugins/designer/libqwt_designer_plugin.dylib",
-          Formula["qt"].opt_prefix/"plugins/designer/" if build.with? "plugin"
   end
 
   def caveats
-    if build.with? "qwtmathml";<<-EOS.undent
+    s = ""
+
+    if build.with? "qwtmathml"
+      s += <<-EOS.undent
         The qwtmathml library contains code of the MML Widget from the Qt solutions package.
         Beside the Qwt license you also have to take care of its license:
         #{opt_prefix}/qtmmlwidget-license
       EOS
     end
+
+    s
   end
 end
 

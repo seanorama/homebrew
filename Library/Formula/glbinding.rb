@@ -1,15 +1,13 @@
-require "formula"
-
 class Glbinding < Formula
+  desc "C++ binding for the OpenGL API"
   homepage "https://github.com/hpicgs/glbinding"
-  url "https://github.com/hpicgs/glbinding/archive/v1.0.2.tar.gz"
-  sha1 "19d6d143bd4106582af4c197e882222e86323820"
+  url "https://github.com/hpicgs/glbinding/archive/v1.1.0.tar.gz"
+  sha256 "2e34024b9b5d4c6a1db9326634f77c1eaab179c36382cb2a5f005c7ec702e8b9"
 
   bottle do
-    cellar :any
-    sha1 "89417315c4b7b4da7c817700fecfd91692a39e9f" => :yosemite
-    sha1 "6bfe54d1a5f99e8af3059d6b02353c2d53d9ea95" => :mavericks
-    sha1 "6f9452c240bd6bd545af65c623e5068385acb206" => :mountain_lion
+    sha256 "267be079b0657c4cc1cb4002bf4047d358630404e2ea0bcb966a5730b6a0641e" => :el_capitan
+    sha256 "39355e37b3417a03a2b8ee7ce46fa27cdf72706a4ee4227fbe8cdfd9fa3a8e05" => :yosemite
+    sha256 "d4e319797d5b4dbf44dcd99f01de934941d7e39e82bcf66508853b386b2bdeab" => :mavericks
   end
 
   depends_on "cmake" => :build

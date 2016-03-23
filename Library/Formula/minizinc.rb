@@ -1,53 +1,28 @@
-require 'formula'
-
 class Minizinc < Formula
-  homepage 'http://www.minizinc.org'
-  url 'http://www.minizinc.org/downloads/release-1.6/minizinc-1.6-x86_64-apple-darwin.tar.gz'
-  sha1 '71f0e08962eb8bb44c463851f0144c8b006fdb80'
+  desc "Medium-level constraint modeling language"
+  homepage "http://www.minizinc.org"
+  url "https://github.com/MiniZinc/libminizinc/archive/2.0.12.tar.gz"
+  sha256 "259cf8227c52cc4700bfe3fac8733b6a65c95ddd6431201e51c32fb9b360f171"
+  head "https://github.com/MiniZinc/libminizinc.git", :branch => "develop"
+
+  bottle do
+    cellar :any_skip_relocation
+    sha256 "f5a9e238379a27d47918610ea07f67a1bf5c94096b2fdd83e30ff33981536ca0" => :el_capitan
+    sha256 "5f1c47c90e9a3123d0e0a5fcc7d2ef287144efb603955a55ca9424ae2cb6379f" => :yosemite
+    sha256 "4308e012879a9996ab133b36c15ab6ff1a81bd69115f7561b4d87498a188831e" => :mavericks
+  end
 
   depends_on :arch => :x86_64
-
-  # remove echoed recommendations about linking directories
-  # add installation location as parameter of SETUP script
-  patch :DATA
+  depends_on "cmake" => :build
 
   def install
-    system "sh", "SETUP", libexec
-    man.install Dir['doc/man/*']
-    libexec.install 'bin', 'lib'
-    bin.install_symlink Dir["#{libexec}/bin/*"]
-    (bin/'private').unlink
+    mkdir "build" do
+      system "cmake", "..", *std_cmake_args
+      system "cmake", "--build", ".", "--target", "install"
+    end
   end
 
   test do
-    system "#{bin}/mzn2fzn", "--help"
+    system bin/"mzn2doc", share/"examples/functions/warehouses.mzn"
   end
 end
-
-__END__
-diff --git a/SETUP b/SETUP
-index 33d973e..7715800 100755
---- a/SETUP
-+++ b/SETUP
-@@ -33,7 +33,3 @@ chmod a+x bin/mzn2fzn
- #----------------------------------------------------------------------------#
-
- echo "-- G12 MiniZinc distribution setup complete."
--echo
--echo "-- Don't forget to add $INSTALL_PATH/bin to your PATH"
--echo "-- and $INSTALL_PATH/doc/man to your MANPATH."
--echo
-
-diff --git a/SETUP b/SETUP
-index 7715800..71c93b6 100755
---- a/SETUP
-+++ b/SETUP
-@@ -11,7 +11,7 @@
- 
- #-----------------------------------------------------------------------------#
-
--INSTALL_PATH=`pwd`
-+INSTALL_PATH=$1
- EXEEXT=""
-  
- #----------------------------------------------------------------------------#

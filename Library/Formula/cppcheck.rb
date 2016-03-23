@@ -1,59 +1,66 @@
-require "formula"
-
 class Cppcheck < Formula
-  homepage "http://sourceforge.net/apps/mediawiki/cppcheck/index.php?title=Main_Page"
-  url "https://github.com/danmar/cppcheck/archive/1.67.tar.gz"
-  sha1 "14b886e5cac631cec11a3f8efbdeaed15ddcc7d3"
-  revision 1
-
+  desc "Static analysis of C and C++ code"
+  homepage "https://sourceforge.net/projects/cppcheck/"
+  url "https://github.com/danmar/cppcheck/archive/1.72.tar.gz"
+  sha256 "c718949e1ec22a8a0dca7e2953a55c502ef65e53ff9922fb91759388618faa7f"
   head "https://github.com/danmar/cppcheck.git"
 
   bottle do
-    sha1 "f5be9595dfdbbc616cbd1f11d3ea59ec32045309" => :yosemite
-    sha1 "5fb0911b3ff750368cbbfed71a1809e298404d8b" => :mavericks
-    sha1 "ae6b9a60ed3e139814c647aabdb4df1c71058436" => :mountain_lion
+    sha256 "95395daf0154293fba7b6254c278a128aad26fc3c9f0a73ac02200be7329eb60" => :el_capitan
+    sha256 "ea7ca38db3bb2e08a9cffd9f003df61d865dad098a140dbec5d5458f085be9d5" => :yosemite
+    sha256 "0e46747db20c2cb9fe2a505901db7f70be154a4326da528740e8cb1e3c1281a3" => :mavericks
   end
 
-  option "no-rules", "Build without rules (no pcre dependency)"
+  option "without-rules", "Build without rules (no pcre dependency)"
   option "with-gui", "Build the cppcheck gui (requires Qt)"
 
-  depends_on "pcre" unless build.include? "no-rules"
+  deprecated_option "no-rules" => "without-rules"
+
+  depends_on "pcre" if build.with? "rules"
   depends_on "qt" if build.with? "gui"
 
+  needs :cxx11
+
   def install
+    ENV.cxx11
+
     # Man pages aren't installed as they require docbook schemas.
 
     # Pass to make variables.
-    if build.include? "no-rules"
-      system "make", "HAVE_RULES=no", "CFGDIR=#{prefix}/cfg"
-    else
+    if build.with? "rules"
       system "make", "HAVE_RULES=yes", "CFGDIR=#{prefix}/cfg"
+    else
+      system "make", "HAVE_RULES=no", "CFGDIR=#{prefix}/cfg"
     end
 
-    system "make", "DESTDIR=#{prefix}", "BIN=#{bin}", "CFGDIR=#{prefix}/cfg", "install"
-
-    # make sure cppcheck can find its configure directory, #26194
-    prefix.install "cfg"
+    # CFGDIR is relative to the prefix for install, don't add #{prefix}.
+    system "make", "DESTDIR=#{prefix}", "BIN=#{bin}", "CFGDIR=/cfg", "install"
 
     if build.with? "gui"
       cd "gui" do
-        # fix make not finding cfg directory:
-        # https://github.com/Homebrew/homebrew/issues/27756
-        inreplace "gui.qrc", "../cfg/", "#{prefix}/cfg/"
-
-        if build.include? "no-rules"
-          system "qmake", "HAVE_RULES=no"
+        if build.with? "rules"
+          system "qmake", "HAVE_RULES=yes"
         else
-          system "qmake"
+          system "qmake", "HAVE_RULES=no"
         end
 
         system "make"
-        bin.install "cppcheck-gui.app"
+        prefix.install "cppcheck-gui.app"
       end
     end
   end
 
   test do
-    system "#{bin}/cppcheck", "--version"
+    (testpath/"test.cpp").write <<-EOS.undent
+      #include <iostream>
+      using namespace std;
+
+      int main()
+      {
+        cout << "Hello World!" << endl;
+        return 0;
+      }
+    EOS
+    system "#{bin}/cppcheck", "test.cpp"
   end
 end

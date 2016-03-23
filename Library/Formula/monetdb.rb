@@ -1,27 +1,61 @@
-require "formula"
+class RRequirement < Requirement
+  fatal true
+
+  satisfy { which("r") }
+
+  def message; <<-EOS.undent
+    R not found. The R integration module requires R.
+    Do one of the following:
+    - install R
+    -- run brew install homebrew/science/r or brew install Caskroom/cask/r
+    - remove the --with-r option
+    EOS
+  end
+end
 
 class Monetdb < Formula
+  desc "Column-store database"
   homepage "https://www.monetdb.org/"
-  url "https://dev.monetdb.org/downloads/sources/Oct2014/MonetDB-11.19.3.zip"
-  sha1 "f8290358c1773afc2679d9cbfea456c691f50527"
+  url "https://www.monetdb.org/downloads/sources/Jul2015-SP2/MonetDB-11.21.13.zip"
+  sha256 "1638d74fbfbccc61e7e72e470114e24f6b31f3449e28b14febeffa8bd380ef69"
 
   bottle do
-    sha1 "e5802401b81d035fe81a9a708dd647128a0a4302" => :yosemite
-    sha1 "ecefa004cd231e9ad1eef530ae9194f5e3db8c13" => :mavericks
-    sha1 "484c94edf77b0acb72aa0e0cb7a8017c149be95c" => :mountain_lion
+    revision 1
+    sha256 "160f961fdae67e0a0c3f28b6ef26baa16343505ff12aee36737540b4437441ff" => :el_capitan
+    sha256 "ccf122c79943fb36e97259e84a7897e5d07c9cfbdcd6fb7390287c18f0317f7e" => :yosemite
+    sha256 "1214716dc3f3d40183fea68685943bddccc55f477d7d3fa5dfebae525680077c" => :mavericks
   end
 
-  head "http://dev.monetdb.org/hg/MonetDB", :using => :hg
+  head do
+    url "https://dev.monetdb.org/hg/MonetDB", :using => :hg
 
-  option "with-java"
+    depends_on "libtool" => :build
+    depends_on "gettext" => :build
+    depends_on "automake" => :build
+    depends_on "autoconf" => :build
+  end
+
+  option "with-java", "Build the JDBC driver"
+  option "with-ruby", "Build the Ruby driver"
+  option "with-r", "Build the R integration module"
+
+  depends_on RRequirement => :optional
 
   depends_on "pkg-config" => :build
   depends_on :ant => :build
+  depends_on "libatomic_ops" => [:build, :recommended]
   depends_on "pcre"
   depends_on "readline" # Compilation fails with libedit.
   depends_on "openssl"
 
+  depends_on "unixodbc" => :optional # Build the ODBC driver
+  depends_on "geos" => :optional # Build the GEOM module
+  depends_on "gsl" => :optional
+  depends_on "cfitsio" => :optional
+  depends_on "homebrew/php/libsphinxclient" => :optional
+
   def install
+    ENV["M4DIRS"] = "#{Formula["gettext"].opt_share}/aclocal" if build.head?
     system "./bootstrap" if build.head?
 
     args = ["--prefix=#{prefix}",
@@ -29,12 +63,13 @@ class Monetdb < Formula
             "--enable-assert=no",
             "--enable-optimize=yes",
             "--enable-testing=no",
-            "--disable-jaql",
-            "--without-rubygem"]
+            "--with-readline=#{Formula["readline"].opt_prefix}"]
 
     args << "--with-java=no" if build.without? "java"
+    args << "--with-rubygem=no" if build.without? "ruby"
+    args << "--disable-rintegration" if build.without? "r"
 
     system "./configure", *args
-    system "make install"
+    system "make", "install"
   end
 end

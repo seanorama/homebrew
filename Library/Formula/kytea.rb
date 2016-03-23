@@ -1,30 +1,26 @@
-require 'formula'
-
 class Kytea < Formula
-  homepage 'http://www.phontron.com/kytea/'
+  desc "Toolkit for analyzing text, especially Japanese and Chinese"
+  homepage "http://www.phontron.com/kytea/"
+  url "http://www.phontron.com/kytea/download/kytea-0.4.7.tar.gz"
+  sha256 "534a33d40c4dc5421f053c71a75695c377df737169f965573175df5d2cff9f46"
 
-  stable do
-    url 'http://www.phontron.com/kytea/download/kytea-0.4.6.tar.gz'
-    sha1 '2fb22c64a7babff26d95874877d83a9ef1f09617'
-
-    # Upstream patch to fix compilation on OS X
-    patch do
-      url "https://github.com/neubig/kytea/commit/782553f61bde4f3366f946c9a390500c028fa17f.diff"
-      sha1 "260d62738e53622873b1d467b44576860e5141fe"
-    end
+  bottle do
+    sha256 "2f2dda314728cd74750db339ebc2d166b8b611ad54668cc3e7b6225d39aec3f5" => :yosemite
+    sha256 "045d0c9ad0cf35e003b8839cb0213e3f49d9107dfbc955e449b36fd4b6596640" => :mavericks
+    sha256 "3f15b353a447519bfb7f602b29db18e7eff945e0b68998af35cc37a745328182" => :mountain_lion
   end
 
   head do
-    url 'https://github.com/neubig/kytea.git'
-    depends_on 'autoconf' => :build
-    depends_on 'automake' => :build
-    depends_on 'libtool' => :build
+    url "https://github.com/neubig/kytea.git"
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   def install
     system "autoreconf", "-i" if build.head?
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
-    system "make install"
+    system "make", "install"
   end
 end

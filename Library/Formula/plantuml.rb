@@ -1,9 +1,10 @@
-require "formula"
-
 class Plantuml < Formula
+  desc "Draw UML diagrams"
   homepage "http://plantuml.sourceforge.net/"
-  url "https://downloads.sourceforge.net/project/plantuml/plantuml.8015.jar"
-  sha1 "0d28c025ce787d53a1fec4c7cb9105e3613501dc"
+  url "https://downloads.sourceforge.net/project/plantuml/plantuml.8037.jar"
+  sha256 "1e15fad64585d6e13735bb635e4137fb4629fdddc4f4340c9d4a5803af629cd6"
+
+  bottle :unneeded
 
   depends_on "graphviz"
 

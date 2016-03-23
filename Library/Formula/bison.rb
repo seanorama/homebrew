@@ -1,14 +1,15 @@
 class Bison < Formula
-  homepage "http://www.gnu.org/software/bison/"
-  url "http://ftpmirror.gnu.org/bison/bison-3.0.2.tar.gz"
-  mirror "http://ftp.gnu.org/gnu/bison/bison-3.0.2.tar.gz"
-  sha1 "4bbb9a1bdc7e4328eb4e6ef2479b3fe15cc49e54"
+  desc "Parser generator"
+  homepage "https://www.gnu.org/software/bison/"
+  url "http://ftpmirror.gnu.org/bison/bison-3.0.4.tar.gz"
+  mirror "https://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.gz"
+  sha256 "b67fd2daae7a64b5ba862c66c07c1addb9e6b1b05c5f2049392cfd8a2172952e"
 
   bottle do
-    revision 1
-    sha1 "12fdce885665b82a723b815f40afa81f8765e1ec" => :yosemite
-    sha1 "59bd723116afc1a23813413e113d36c0a4361a3a" => :mavericks
-    sha1 "995e0372cc6b74c5475f740b83c17963fddbf320" => :mountain_lion
+    sha256 "17488b69156f6fc91dd438c54920751399c23745f330487abd54c4cbcb49ff6a" => :el_capitan
+    sha256 "0a6b72564c1602a033d814b68939bf2732f21cfdc06196c29da19c79faba669f" => :yosemite
+    sha256 "a3146ea90c2e4ee5d5626154b3446c7c5aea748b9239beac6ac2c26e753c830e" => :mavericks
+    sha256 "1ac1b43ae92fea5b04f663197309ce8b788061d31f09ba14e97dd4d5d1183d62" => :mountain_lion
   end
 
   keg_only :provided_by_osx, "Some formulae require a newer version of bison."

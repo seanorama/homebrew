@@ -1,17 +1,14 @@
-require 'formula'
-
 class Mpd < Formula
+  desc "Music Player Daemon"
   homepage "http://www.musicpd.org/"
-
-  stable do
-    url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.7.tar.xz"
-    sha1 "6f67d8ac14881c2d72c2907c2c1e14c6b2fd04c5"
-  end
+  url "http://www.musicpd.org/download/mpd/0.19/mpd-0.19.13.tar.xz"
+  sha256 "f1014838fa7ab2d5fe2ef7f4c101d58fdec2c4c13cfbd2462ee146c8e4919a55"
 
   bottle do
-    sha1 "7127edb4393da87d22a2d683f18d3abfd3c3c8be" => :yosemite
-    sha1 "3f516ee89d70403d53214993723a46a63c772875" => :mavericks
-    sha1 "cd2705900d74ec5c2fba2c0de1b8c63397c347f2" => :mountain_lion
+    cellar :any
+    sha256 "92e070f774ac41e96e2b90994b7e3843cf427c2df292e0d62a49a9e9fec31eb9" => :el_capitan
+    sha256 "b475640fdc9eef2a2c94f1b1fa1d053dd7a5a1d3f38273dacfc0116dda54d741" => :yosemite
+    sha256 "b47cb59ef87a1547a1a0331ba7693ae641ee92f96ac2e02cbd2f3e52633c4619" => :mavericks
   end
 
   head do
@@ -42,7 +39,7 @@ class Mpd < Formula
   needs :cxx11
 
   depends_on "libmpdclient"
-  depends_on "ffmpeg"                   # lots of codecs
+  depends_on "ffmpeg" # lots of codecs
   # mpd also supports mad, mpg123, libsndfile, and audiofile, but those are
   # redundant with ffmpeg
   depends_on "fluid-synth"              # MIDI
@@ -58,6 +55,8 @@ class Mpd < Formula
   depends_on "yajl" => :optional        # JSON library for SoundCloud
   depends_on "opus" => :optional        # Opus support
   depends_on "libvorbis" => :optional
+  depends_on "libnfs" => :optional
+  depends_on "mad" => :optional
 
   def install
     # mpd specifies -std=gnu++0x, but clang appears to try to build
@@ -71,6 +70,7 @@ class Mpd < Formula
       --disable-debug
       --disable-dependency-tracking
       --prefix=#{prefix}
+      --sysconfdir=#{etc}
       --enable-bzip2
       --enable-ffmpeg
       --enable-fluidsynth
@@ -78,7 +78,7 @@ class Mpd < Formula
       --disable-libwrap
     ]
 
-    args << "--disable-mad"
+    args << "--disable-mad" if build.without? "mad"
     args << "--disable-curl" if MacOS.version <= :leopard
 
     args << "--enable-zzip" if build.with? "libzzip"
@@ -86,11 +86,14 @@ class Mpd < Formula
     args << "--disable-lame-encoder" if build.without? "lame"
     args << "--disable-soundcloud" if build.without? "yajl"
     args << "--enable-vorbis-encoder" if build.with? "libvorbis"
+    args << "--enable-nfs" if build.with? "libnfs"
 
     system "./configure", *args
     system "make"
     ENV.j1 # Directories are created in parallel, so let's not do that
-    system "make install"
+    system "make", "install"
+
+    (etc/"mpd").install "doc/mpdconf.example" => "mpd.conf"
   end
 
   plist_options :manual => "mpd"
@@ -116,5 +119,19 @@ class Mpd < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    pid = fork do
+      exec "#{bin}/mpd --stdout --no-daemon --no-config"
+    end
+    sleep 2
+
+    begin
+      assert_match "OK MPD", shell_output("curl localhost:6600")
+    ensure
+      Process.kill "SIGINT", pid
+      Process.wait pid
+    end
   end
 end

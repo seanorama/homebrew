@@ -1,15 +1,15 @@
 class Libevent < Formula
+  desc "Asynchronous event library"
   homepage "http://libevent.org"
-  url "https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz"
-  mirror "https://mirrors.kernel.org/debian/pool/main/libe/libevent/libevent_2.0.21-stable.orig.tar.gz"
-  sha1 "3e6674772eb77de24908c6267c698146420ab699"
-  revision 1
+  url "https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz"
+  sha256 "71c2c49f0adadacfdbe6332a372c38cf9c8b7895bb73dabeaa53cdcc1d4e1fa3"
 
   bottle do
     cellar :any
-    sha1 "02d25e21d04bdef22de822daf70f13c90147b504" => :yosemite
-    sha1 "bbf14123e381177a6423a064ff82b5b3adc3d85a" => :mavericks
-    sha1 "b1de9d394f4df8561760e3c34c23bb9b518e372f" => :mountain_lion
+    sha256 "968c69226279617bd8abc9641c602706e184ad8fab99275675070cf65a99d3eb" => :el_capitan
+    sha256 "a7d3b12f1159fdb17ad77cf323a83fd7a0b961f6ec90f56129aa70e067d24557" => :yosemite
+    sha256 "fe2eac7bcc675e5fddc5df9a9ff1428ec666d1aac495b363410a28c8dd2fe86f" => :mavericks
+    sha256 "2dfd0517ff3a0065bc07d742ae2fe44075cb99a33bffa4cb88a5bff886d630d3" => :mountain_lion
   end
 
   head do
@@ -33,6 +33,9 @@ class Libevent < Formula
     build 2326
     cause "Undefined symbol '_current_base' reported during linking."
   end
+
+  conflicts_with "pincaster",
+    :because => "both install `event_rpcgen.py` binaries"
 
   def install
     ENV.universal_binary if build.universal?

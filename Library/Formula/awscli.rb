@@ -1,13 +1,16 @@
 class Awscli < Formula
+  desc "Official Amazon AWS command-line interface"
   homepage "https://aws.amazon.com/cli/"
-  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.6.5.tar.gz"
-  sha1 "e9d225414c1d782f6951ee82e25a7d44f0f4127b"
+  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.10.14.tar.gz"
+  mirror "https://github.com/aws/aws-cli/archive/1.10.14.tar.gz"
+  sha256 "68355a6e86a25596939b98ce1902b9778cbce327b1d98e211bb1dd69e7a2cdf2"
 
   bottle do
-    cellar :any
-    sha1 "1ed935e18c781459271b577f8e00957a8efbe4fc" => :yosemite
-    sha1 "d04e21b63766c5aef2cdfbf34bee676f6b7f896b" => :mavericks
-    sha1 "ffacba159d15d262e584b221235b9d5e3e017174" => :mountain_lion
+    cellar :any_skip_relocation
+    revision 1
+    sha256 "536ddd51d872c44d91f0ecad2ce34c65a37aa681f5dd164f5bd22c1f8ec475c1" => :el_capitan
+    sha256 "6f68f9c8570a92d0127d6eba2a379afc31cb5d0134009b3251acadb723cc81be" => :yosemite
+    sha256 "5f8dad8e7b36a41cd57615dbd99b8df36459a8c2a6d64fc9f1396a9527861c47" => :mavericks
   end
 
   head do
@@ -17,60 +20,72 @@ class Awscli < Formula
       url "https://github.com/boto/botocore.git", :branch => "develop"
     end
 
-    resource "bcdoc" do
-      url "https://github.com/boto/bcdoc.git", :branch => "develop"
-    end
-
     resource "jmespath" do
       url "https://github.com/boto/jmespath.git", :branch => "develop"
     end
+
+    resource "s3transfer" do
+      url "https://github.com/boto/s3transfer.git", :branch => "develop"
+    end
   end
 
-  depends_on :python if MacOS.version <= :snow_leopard
+  # Use :python on Lion to avoid urllib3 warning
+  # https://github.com/Homebrew/homebrew/pull/37240
+  depends_on :python if MacOS.version <= :lion
 
   resource "six" do
-    url "https://pypi.python.org/packages/source/s/six/six-1.8.0.tar.gz"
-    sha1 "aa3b0659cbc85c6c7a91efc51f2d1007040070cd"
+    url "https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz"
+    sha256 "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a"
   end
 
   resource "python-dateutil" do
-    url "https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-2.2.tar.gz"
-    sha1 "fbafcd19ea0082b3ecb17695b4cb46070181699f"
+    url "https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-2.4.2.tar.gz"
+    sha256 "3e95445c1db500a344079a47b171c45ef18f57d188dffdb0e4165c71bea8eb3d"
   end
 
   resource "colorama" do
-    url "https://pypi.python.org/packages/source/c/colorama/colorama-0.3.2.tar.gz"
-    sha1 "f2da891543421eeb423c469dff13faf1e70187e5"
-  end
-
-  resource "jmespath" do
-    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.5.0.tar.gz"
-    sha1 "c9ce28e08fd24cdaa23e1183008b67ded302ef27"
+    url "https://pypi.python.org/packages/source/c/colorama/colorama-0.3.3.tar.gz"
+    sha256 "eb21f2ba718fbf357afdfdf6f641ab393901c7ca8d9f37edd0bee4806ffa269c"
   end
 
   resource "botocore" do
-    url "https://pypi.python.org/packages/source/b/botocore/botocore-0.76.0.tar.gz"
-    sha1 "7c4021228bee72880d960e09f88bc893368045e9"
+    url "https://pypi.python.org/packages/source/b/botocore/botocore-1.4.5.tar.gz"
+    sha256 "d83d6623d9eba2d2e2474c35b6180809d3f4c36321006a49a8d1dd6f652a93c3"
+  end
+
+  resource "jmespath" do
+    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.9.0.tar.gz"
+    sha256 "08dfaa06d4397f283a01e57089f3360e3b52b5b9da91a70e1fd91e9f0cdd3d3d"
+  end
+
+  resource "s3transfer" do
+    url "https://pypi.python.org/packages/source/s/s3transfer/s3transfer-0.0.1.tar.gz"
+    sha256 "2bb9ed8db58af94dfa78f75f554d646dfe4b4741fc87f63a20c2bfb3f70f4355"
+  end
+
+  resource "futures" do
+    url "https://pypi.python.org/packages/source/f/futures/futures-3.0.5.tar.gz"
+    sha256 "0542525145d5afc984c88f914a0c85c77527f65946617edb5274f72406f981df"
   end
 
   resource "docutils" do
     url "https://pypi.python.org/packages/source/d/docutils/docutils-0.12.tar.gz"
-    sha1 "002450621b33c5690060345b0aac25bc2426d675"
-  end
-
-  resource "bcdoc" do
-    url "https://pypi.python.org/packages/source/b/bcdoc/bcdoc-0.12.2.tar.gz"
-    sha1 "31b2a714c2803658d9d028c8edf4623fd0daaf18"
+    sha256 "c7db717810ab6965f66c8cf0398a98c9d8df982da39b4cd7f162911eb89596fa"
   end
 
   resource "pyasn1" do
-    url "https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.7.tar.gz"
-    sha1 "e32b91c5a5d9609fb1d07d8685a884bab22ca6d0"
+    url "https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.9.tar.gz"
+    sha256 "853cacd96d1f701ddd67aa03ecc05f51890135b7262e922710112f12a2ed2a7f"
   end
 
   resource "rsa" do
-    url "https://pypi.python.org/packages/source/r/rsa/rsa-3.1.4.tar.gz"
-    sha1 "208583c49489b7ab415a4455eae7618b7055feca"
+    url "https://pypi.python.org/packages/source/r/rsa/rsa-3.3.tar.gz"
+    sha256 "03f3d9bebad06681771016b8752a40b12f615ff32363c7aa19b3798e73ccd615"
+  end
+
+  resource "tox" do
+    url "https://pypi.python.org/packages/source/t/tox/tox-2.3.1.tar.gz"
+    sha256 "bf7fcc140863820700d3ccd65b33820ba747b61c5fe4e2b91bb8c64cb21a47ee"
   end
 
   def install
@@ -89,7 +104,7 @@ class Awscli < Formula
     zsh_completion.install "bin/aws_zsh_completer.sh" => "_aws"
 
     # Install the examples
-    (share+"awscli").install "awscli/examples"
+    pkgshare.install "awscli/examples"
 
     bin.install Dir[libexec/"bin/*"]
     bin.env_script_all_files(libexec+"bin", :PYTHONPATH => ENV["PYTHONPATH"])
@@ -110,7 +125,7 @@ class Awscli < Formula
       aws configure
 
     More information:
-      http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+      https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
     EOS
   end
 

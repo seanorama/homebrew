@@ -1,38 +1,45 @@
-require "formula"
-
 class Imagemagick < Formula
-  homepage "http://www.imagemagick.org"
-  url "http://www.imagemagick.org/download/releases/ImageMagick-6.8.9-8.tar.xz"
-  sha256 "27360449c6f3d4cca548d1780ecd5f8313a57a0a83d6d953a5088cc81714e9b0"
+  desc "Tools and libraries to manipulate images in many formats"
+  homepage "https://www.imagemagick.org/"
+  # Please always keep the Homebrew mirror as the primary URL as the
+  # ImageMagick site removes tarballs regularly which means we get issues
+  # unnecessarily and older versions of the formula are broken.
+  url "https://dl.bintray.com/homebrew/mirror/ImageMagick-6.9.3-6.tar.xz"
+  mirror "https://www.imagemagick.org/download/ImageMagick-6.9.3-6.tar.xz"
+  sha256 "519b14a5f58f5b55a61bebd378aff63176d8c2e9d1eb23ee332d2cc73d11943f"
 
-  head "http://www.imagemagick.org/subversion/ImageMagick/trunk"
+  head "http://git.imagemagick.org/repos/ImageMagick.git"
 
   bottle do
-    sha1 "c395c3d14542a6c002fef70dca747f79df7a2df2" => :yosemite
-    sha1 "aef09c33ac55f1b006d197aa9f14286a6af825a6" => :mavericks
-    sha1 "2421db9b50fabf940c4572791e5c5f73ffd009c8" => :mountain_lion
+    sha256 "9b39c38306699d171d20d63ce262041c24a56c46371d1e51734dc5f5450ca517" => :el_capitan
+    sha256 "c6576149b066086797d9e5ad1514320963a7b0984a6119aec1e13b46e08e7959" => :yosemite
+    sha256 "351cfda4a52c2722209be5b279002793752c134049c3b89ccee4faa59bdc82bf" => :mavericks
   end
 
+  deprecated_option "enable-hdri" => "with-hdri"
+
+  option "with-fftw", "Compile with FFTW support"
+  option "with-hdri", "Compile with HDRI support"
+  option "with-jp2", "Compile with Jpeg2000 support"
+  option "with-openmp", "Compile with OpenMP support"
+  option "with-perl", "enable build/install of PerlMagick"
   option "with-quantum-depth-8", "Compile with a quantum depth of 8 bit"
   option "with-quantum-depth-16", "Compile with a quantum depth of 16 bit"
   option "with-quantum-depth-32", "Compile with a quantum depth of 32 bit"
-  option "with-perl", "enable build/install of PerlMagick"
+  option "without-opencl", "Disable OpenCL"
   option "without-magick-plus-plus", "disable build/install of Magick++"
-  option "with-jp2", "Compile with Jpeg2000 support"
-  option "enable-hdri", "Compile with HDRI support"
-  option "with-fftw", "Compile with FFTW support"
 
+  depends_on "xz"
   depends_on "libtool" => :run
-
   depends_on "pkg-config" => :build
 
   depends_on "jpeg" => :recommended
   depends_on "libpng" => :recommended
+  depends_on "libtiff" => :recommended
   depends_on "freetype" => :recommended
 
   depends_on :x11 => :optional
   depends_on "fontconfig" => :optional
-  depends_on "libtiff" => :optional
   depends_on "little-cms" => :optional
   depends_on "little-cms2" => :optional
   depends_on "libwmf" => :optional
@@ -43,32 +50,40 @@ class Imagemagick < Formula
   depends_on "webp" => :optional
   depends_on "homebrew/versions/openjpeg21" if build.with? "jp2"
   depends_on "fftw" => :optional
+  depends_on "pango" => :optional
 
-  depends_on "xz"
+  needs :openmp if build.with? "openmp"
 
   skip_clean :la
 
   def install
-    args = [ "--disable-osx-universal-binary",
-             "--prefix=#{prefix}",
-             "--disable-dependency-tracking",
-             "--enable-shared",
-             "--disable-static",
-             "--without-pango",
-             "--with-modules",
-             "--disable-openmp"]
+    args = %W[
+      --disable-osx-universal-binary
+      --prefix=#{prefix}
+      --disable-dependency-tracking
+      --disable-silent-rules
+      --enable-shared
+      --disable-static
+      --with-modules
+    ]
 
-    args << "--disable-opencl" if build.include? "disable-opencl"
+    if build.with? "openmp"
+      args << "--enable-openmp"
+    else
+      args << "--disable-openmp"
+    end
+    args << "--disable-opencl" if build.without? "opencl"
     args << "--without-gslib" if build.without? "ghostscript"
-    args << "--without-perl" if build.without? "perl"
+    args << "--with-perl" << "--with-perl-options='PREFIX=#{prefix}'" if build.with? "perl"
     args << "--with-gs-font-dir=#{HOMEBREW_PREFIX}/share/ghostscript/fonts" if build.without? "ghostscript"
     args << "--without-magick-plus-plus" if build.without? "magick-plus-plus"
-    args << "--enable-hdri=yes" if build.include? "enable-hdri"
+    args << "--enable-hdri=yes" if build.with? "hdri"
     args << "--enable-fftw=yes" if build.with? "fftw"
+    args << "--without-pango" if build.without? "pango"
 
     if build.with? "quantum-depth-32"
       quantum_depth = 32
-    elsif build.with? "quantum-depth-16"
+    elsif build.with?("quantum-depth-16") || build.with?("perl")
       quantum_depth = 16
     elsif build.with? "quantum-depth-8"
       quantum_depth = 8
@@ -90,19 +105,13 @@ class Imagemagick < Formula
     # versioned stuff in main tree is pointless for us
     inreplace "configure", "${PACKAGE_NAME}-${PACKAGE_VERSION}", "${PACKAGE_NAME}"
     system "./configure", *args
-    system "make install"
+    system "make", "install"
   end
 
   def caveats
     s = <<-EOS.undent
-      For full Perl support you must install the Image::Magick module from the CPAN.
-        https://metacpan.org/module/Image::Magick
-
-      The version of the Perl module and ImageMagick itself need to be kept in sync.
-      If you upgrade one, you must upgrade the other.
-
-      For this version of ImageMagick you should install
-      version #{version} of the Image::Magick Perl module.
+      For full Perl support you may need to adjust your PERL5LIB variable:
+        export PERL5LIB="#{HOMEBREW_PREFIX}/lib/perl5/site_perl":$PERL5LIB
     EOS
     s if build.with? "perl"
   end

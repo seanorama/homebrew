@@ -1,30 +1,36 @@
-require 'formula'
-
 class Nspr < Formula
+  desc "Platform-neutral API for system-level and libc-like functions"
   homepage "https://developer.mozilla.org/docs/Mozilla/Projects/NSPR"
-  url "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v4.10.7/src/nspr-4.10.7.tar.gz"
-  sha256 "389af5cfa863ea9bc6de7b30c15f8a4f9bddd8002f8c6fdc8b33caef43893938"
+  url "https://archive.mozilla.org/pub/mozilla.org/nspr/releases/v4.12/src/nspr-4.12.tar.gz"
+  sha256 "e0b10a1e569153668ff8bdea6c7e491b389fab69c2f18285a1ebf7c2ea4269de"
 
   bottle do
     cellar :any
-    sha1 "0b5ae7b07ce671c57c590eb37807fb8391537284" => :yosemite
-    sha1 "ac2f2904dd4c6e47fde68f3ac7c38a4745ec0702" => :mavericks
-    sha1 "1180562bef675d27bf8b6d33da4e045927819538" => :mountain_lion
+    sha256 "344f8eb1ee403109ddd2c30f4874c936026b10ee008a856bb168125946c8a79c" => :el_capitan
+    sha256 "92a39fd2483db74226ae083ac3bed78c573f55d57ca0ef083e2c28b367e56c0e" => :yosemite
+    sha256 "03382846cbd142a72bbb3891537a50d4ef3e4e45e1cfba9e89748dd74323be60" => :mavericks
   end
+
+  keg_only <<-EOS.undent
+    Having this library symlinked makes Firefox pick it up instead of built-in,
+    so it then randomly crashes without meaningful explanation.
+
+    Please see https://bugzilla.mozilla.org/show_bug.cgi?id=1142646 for details.
+  EOS
 
   def install
     ENV.deparallelize
     cd "nspr" do
       # Fixes a bug with linking against CoreFoundation, needed to work with SpiderMonkey
       # See: http://openradar.appspot.com/7209349
-      target_frameworks = (Hardware.is_32_bit? or MacOS.version <= :leopard) ? "-framework Carbon" : ""
+      target_frameworks = (Hardware.is_32_bit? || MacOS.version <= :leopard) ? "-framework Carbon" : ""
       inreplace "pr/src/Makefile.in", "-framework CoreServices -framework CoreFoundation", target_frameworks
 
       args = %W[
         --disable-debug
         --prefix=#{prefix}
         --enable-strip
-        --enable-pthreads
+        --with-pthreads
         --enable-ipv6
         --enable-macos-target=#{MacOS.version}
       ]
@@ -34,7 +40,7 @@ class Nspr < Formula
       inreplace "config/autoconf.mk", "-install_name @executable_path/$@ ", "-install_name #{lib}/$@ "
 
       system "make"
-      system "make install"
+      system "make", "install"
 
       (bin/"compile-et.pl").unlink
       (bin/"prerr.properties").unlink

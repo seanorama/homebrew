@@ -1,31 +1,39 @@
-require 'formula'
-
 class JohnJumbo < Formula
-  homepage 'http://www.openwall.com/john/'
-  url 'http://www.openwall.com/john/g/john-1.7.9.tar.bz2'
-  sha1 '8f77bdd42b7cf94ec176f55ea69c4da9b2b8fe3b'
-  revision 1
+  desc "Enhanced version of john, a UNIX password cracker"
+  homepage "http://www.openwall.com/john/"
+
+  stable do
+    url "http://openwall.com/john/j/john-1.8.0-jumbo-1.tar.xz"
+    sha256 "bac93d025995a051f055adbd7ce2f1975676cac6c74a6c7a3ee4cfdd9c160923"
+    version "1.8.0"
+
+    # Previously john-jumbo ignored the value of $HOME; fixed
+    # upstream.  See
+    # https://github.com/magnumripper/JohnTheRipper/issues/1901
+    patch do
+      url "https://github.com/magnumripper/JohnTheRipper/commit/d29ad8aabaa9726eb08f440001c37611fa072e0c.diff"
+      sha256 "de5c09397f3666d0592e0f418f26a78a6624c5a947347ec2440e141c8915ae82"
+    end
+  end
 
   bottle do
-    revision 1
-    sha1 "a11eb01effa085f1f196353477111f76c39e6349" => :mavericks
-    sha1 "acbdf6c2b4f59b2b4e756d7288f3d727ab630706" => :mountain_lion
-    sha1 "eef8dcc88d9666c7c3c099bee4cc6d14f27a056b" => :lion
+    cellar :any
+    revision 6
+    sha256 "a87bf02d882413393f3f3759ab0fa6a171438609d101c7c9bc7772fe69e2ab47" => :el_capitan
+    sha256 "cf9c82f416a4eb3aad7d4202b21105988d346be8d8df262ea4ca18e683475d32" => :yosemite
+    sha256 "b36f66b0469b5c6cde95f780671db5b32e4e4dd7c16c4e7e591043bfdef2b65c" => :mavericks
   end
 
-  conflicts_with 'john', :because => 'both install the same binaries'
+  conflicts_with "john", :because => "both install the same binaries"
 
+  option "without-completion", "bash/zsh completion will not be installed"
+
+  depends_on "pkg-config" => :build
   depends_on "openssl"
+  depends_on "gmp"
 
-  patch do
-    url "http://www.openwall.com/john/g/john-1.7.9-jumbo-7.diff.gz"
-    sha1 "22fd8294e997f45a301cfeb65a8aa7083f25a55d"
-  end
-
-  # First patch taken from MacPorts, tells john where to find runtime files
-  # Second patch protects against a redefinition of _mm_testz_si128 which
-  # tanked the build in clang;
-  # see https://github.com/Homebrew/homebrew/issues/26531
+  # Patch taken from MacPorts, tells john where to find runtime files.
+  # https://github.com/magnumripper/JohnTheRipper/issues/982
   patch :DATA
 
   fails_with :llvm do
@@ -33,37 +41,45 @@ class JohnJumbo < Formula
     cause "Don't remember, but adding this to whitelist 2336."
   end
 
+  # https://github.com/magnumripper/JohnTheRipper/blob/bleeding-jumbo/doc/INSTALL#L133-L143
+  fails_with :gcc do
+    cause "Upstream have a hacky workaround for supporting gcc that we can't use."
+  end
+
   def install
-    ENV.deparallelize
-    arch = MacOS.prefer_64_bit? ? "64-opencl" : "sse2-opencl"
-    target = "macosx-x86-#{arch}"
-
-    args = %W[-C src clean CC=#{ENV.cc} #{target}]
-
-    if MacOS.version >= :snow_leopard
-      case ENV.compiler
-      when :clang
-        # no openmp support
-      when :gcc, :llvm
-        args << "OMPFLAGS=-fopenmp -msse2 -D_FORTIFY_SOURCE=0"
-      else
-        args << "OMPFLAGS=-fopenmp -msse2"
+    cd "src" do
+      args = []
+      if build.bottle?
+        args << "--disable-native-tests" << "--disable-native-macro"
       end
+      system "./configure", *args
+      system "make", "clean"
+      system "make", "-s", "CC=#{ENV.cc}"
     end
 
-    system "make", *args
+    # Remove the symlink and install the real file
+    rm "README"
+    prefix.install "doc/README"
+    doc.install Dir["doc/*"]
 
-    # Remove the README symlink and install the real file
-    rm 'README'
-    prefix.install 'doc/README'
-    doc.install Dir['doc/*']
+    # Only symlink the main binary into bin
+    (share/"john").install Dir["run/*"]
+    bin.install_symlink share/"john/john"
 
-    # Only symlink the binary into bin
-    (share/'john').install Dir['run/*']
-    bin.install_symlink share/'john/john'
+    if build.with? "completion"
+      bash_completion.install share/"john/john.bash_completion" => "john.bash"
+      zsh_completion.install share/"john/john.zsh_completion" => "_john"
+    end
 
-    # Source code defaults to 'john.ini', so rename
-    mv share/'john/john.conf', share/'john/john.ini'
+    # Source code defaults to "john.ini", so rename
+    mv share/"john/john.conf", share/"john/john.ini"
+  end
+
+  test do
+    touch "john2.pot"
+    (testpath/"test").write "dave:#{`printf secret | /usr/bin/openssl md5`}"
+    assert_match(/secret/, shell_output("#{bin}/john --pot=#{testpath}/john2.pot --format=raw-md5 test"))
+    assert_match(/secret/, (testpath/"john2.pot").read)
   end
 end
 
@@ -90,17 +106,3 @@ __END__
  #endif
  #define JOHN_PRIVATE_HOME		"~/.john"
  #endif
-
-diff --git a/src/rawSHA1_ng_fmt.c b/src/rawSHA1_ng_fmt.c
-index 5f89cda..6cbd550 100644
---- a/src/rawSHA1_ng_fmt.c
-+++ b/src/rawSHA1_ng_fmt.c
-@@ -530,7 +530,7 @@ static void sha1_fmt_crypt_all(int count)
- 
- #if defined(__SSE4_1__)
- 
--# if !defined(__INTEL_COMPILER)
-+# if !defined(__INTEL_COMPILER) && !defined(__clang__)
- // This intrinsic is not always available in GCC, so define it here.
- static inline int _mm_testz_si128 (__m128i __M, __m128i __V)
- {

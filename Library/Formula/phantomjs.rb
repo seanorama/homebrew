@@ -1,32 +1,26 @@
-require "formula"
-
 class Phantomjs < Formula
-  homepage "http://www.phantomjs.org/"
-
-  stable do
-    url "https://github.com/ariya/phantomjs/archive/1.9.8.tar.gz"
-    sha256 "3a321561677f678ca00137c47689e3379c7fe6b83f7597d2d5de187dd243f7be"
-  end
+  desc "Headless WebKit scriptable with a JavaScript API"
+  homepage "http://phantomjs.org/"
+  url "https://github.com/ariya/phantomjs.git",
+      :tag => "2.1.1",
+      :revision => "d9cda3dcd26b0e463533c5cc96e39c0f39fc32c1"
+  head "https://github.com/ariya/phantomjs.git"
 
   bottle do
     cellar :any
-    sha1 "d7016751675b1b7948e712b7c90e38f698527ae7" => :yosemite
-    sha1 "cb2da81b59d7b5825645d4a598876539a99bf65c" => :mavericks
-    sha1 "c43984e9ffb64d628f27b64bae5b75cbfd9dcfc2" => :mountain_lion
+    sha256 "f66255cd772834de297a10fc7053800bfbd99c4833196958c18f05299dec6bc9" => :el_capitan
+    sha256 "0ba4152cce3869cc01ed697d9bbf4dfe55d7749693dfbf6bede24c191c0f177f" => :yosemite
+    sha256 "908cacf9af85893f54c5330987099896448c2699a7f3712de3e2232348c433b2" => :mavericks
   end
 
-  head "https://github.com/ariya/phantomjs.git"
-
+  depends_on :xcode => :build
   depends_on "openssl"
 
   def install
-    if build.stable? && MacOS.prefer_64_bit?
-      inreplace "src/qt/preconfig.sh", "-arch x86", "-arch x86_64"
-    end
-    system "./build.sh", "--confirm", "--jobs", ENV.make_jobs,
-      "--qt-config", "-openssl-linked"
+    inreplace "build.py", "/usr/local", HOMEBREW_PREFIX
+    system "./build.py", "--confirm", "--jobs", ENV.make_jobs
     bin.install "bin/phantomjs"
-    (share+"phantomjs").install "examples"
+    pkgshare.install "examples"
   end
 
   test do

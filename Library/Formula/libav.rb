@@ -1,16 +1,17 @@
-require "formula"
-
 class Libav < Formula
+  desc "Audio and video processing tools"
   homepage "https://libav.org/"
-  url "https://libav.org/releases/libav-11.1.tar.xz"
-  sha1 "4cd3337c6c67481b7165c9c618f1fcf6998942ce"
+  url "https://libav.org/releases/libav-11.4.tar.xz"
+  sha256 "0b7dabc2605f3a254ee410bb4b1a857945696aab495fe21b34c3b6544ff5d525"
+  revision 2
 
-  head "git://git.libav.org/libav.git"
+  head "https://git.libav.org/libav.git"
 
   bottle do
-    sha1 "450f32ac0b9be44d70e7cad574ed5937ef040050" => :yosemite
-    sha1 "ddd3dea8eea023d750b1e9644460b4d0dd12e311" => :mavericks
-    sha1 "169b1f483e117f253196956876c03092ddaba01e" => :mountain_lion
+    revision 1
+    sha256 "3223c7dd692ab5f842161c25bd000dc7e35e4dbd115075e689f24761917c3b28" => :el_capitan
+    sha256 "918a06af5462bb2854099ff9df522f03d86d2913961305a0ea250cae48058f95" => :yosemite
+    sha256 "4d67498870e513e072c2ccbbf43f23657bb90dc6c2871d52221902823bcfbf40" => :mavericks
   end
 
   option "without-faac", "Disable AAC encoder via faac"
@@ -18,7 +19,7 @@ class Libav < Formula
   option "without-x264", "Disable H.264 encoder via x264"
   option "without-xvid", "Disable Xvid MPEG-4 video encoder via xvid"
 
-  option "with-opencore-amr", "Enable AMR-NB de/encoding and AMR-WB decoding " +
+  option "with-opencore-amr", "Enable AMR-NB de/encoding and AMR-WB decoding " \
     "via libopencore-amrnb and libopencore-amrwb"
   option "with-openjpeg", "Enable JPEG 2000 de/encoding via OpenJPEG"
   option "with-openssl", "Enable SSL support"
@@ -42,6 +43,7 @@ class Libav < Formula
   depends_on "x264" => :recommended
   depends_on "xvid" => :recommended
 
+  depends_on "fontconfig" => :optional
   depends_on "freetype" => :optional
   depends_on "fdk-aac" => :optional
   depends_on "frei0r" => :optional
@@ -58,10 +60,18 @@ class Libav < Formula
   depends_on "speex" => :optional
   depends_on "theora" => :optional
 
+  # Fixes the use of a removed identifier in libvpx;
+  # will be fixed in the next release.
+  patch do
+    url "https://github.com/libav/libav/commit/4d05e9392f84702e3c833efa86e84c7f1cf5f612.patch"
+    sha256 "78f02e231f3931a6630ec4293994fc6933c6a1c3d1dd501989155236843c47f9"
+  end
+
   def install
     args = [
       "--disable-debug",
       "--disable-shared",
+      "--disable-indev=jack",
       "--prefix=#{prefix}",
       "--enable-gpl",
       "--enable-nonfree",
@@ -69,13 +79,14 @@ class Libav < Formula
       "--enable-vda",
       "--cc=#{ENV.cc}",
       "--host-cflags=#{ENV.cflags}",
-      "--host-ldflags=#{ENV.ldflags}"
+      "--host-ldflags=#{ENV.ldflags}",
     ]
 
     args << "--enable-frei0r" if build.with? "frei0r"
     args << "--enable-gnutls" if build.with? "gnutls"
     args << "--enable-libfaac" if build.with? "faac"
     args << "--enable-libfdk-aac" if build.with? "fdk-aac"
+    args << "--enable-libfontconfig" if build.with? "fontconfig"
     args << "--enable-libfreetype" if build.with? "freetype"
     args << "--enable-libmp3lame" if build.with? "lame"
     args << "--enable-libopencore-amrnb" if build.with? "opencore-amr"
@@ -106,6 +117,9 @@ class Libav < Formula
   end
 
   test do
-    system "#{bin}/avconv -h"
+    # Create an example mp4 file
+    system "#{bin}/avconv", "-y", "-filter_complex",
+        "testsrc=rate=1:duration=1", "#{testpath}/video.mp4"
+    assert (testpath/"video.mp4").exist?
   end
 end

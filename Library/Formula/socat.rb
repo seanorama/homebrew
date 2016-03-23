@@ -1,26 +1,33 @@
-require 'formula'
-
 class Socat < Formula
-  homepage 'http://www.dest-unreach.org/socat/'
-  url 'http://www.dest-unreach.org/socat/download/socat-1.7.2.4.tar.bz2'
-  mirror 'http://ftp.de.debian.org/debian/pool/main/s/socat/socat_1.7.2.4.orig.tar.bz2'
-  sha1 '55650f3c4c1a5cdc323b2e6eece416b6303d39b5'
-  revision 1
+  desc "netcat on steroids"
+  homepage "http://www.dest-unreach.org/socat/"
+  url "http://www.dest-unreach.org/socat/download/socat-1.7.3.1.tar.gz"
+  sha256 "a8cb07b12bcd04c98f4ffc1c68b79547f5dd4e23ddccb132940f6d55565c7f79"
 
   bottle do
     cellar :any
-    revision 1
-    sha1 "5ffec90f5f7c1c515cf131364981ff7737b9551a" => :mavericks
-    sha1 "029fb4d33ebd3f5afae75b5da5cb6de72c19a2c3" => :mountain_lion
-    sha1 "06edff14216361eebb2a348b0a51954a12dc3f60" => :lion
+    sha256 "6ecb3cbe4ce22509a88db917005018e634954fb0950d49ddf6f75d1fa6b6a789" => :el_capitan
+    sha256 "8e7444400aab2b0dcf49580fc2d52ce587706827385c58379fbfadddca55da35" => :yosemite
+    sha256 "8dbf0e7e4163d0e88deb6048e151840f1cf7cfec974cd34a3866e2a1030c25df" => :mavericks
   end
 
-  depends_on 'readline'
-  depends_on 'openssl'
+  devel do
+    url "http://www.dest-unreach.org/socat/download/socat-2.0.0-b9.tar.gz"
+    version "2.0.0-b9"
+    sha256 "f9496ea44898d7707507a728f1ff16b887c80ada63f6d9abb0b727e96d5c281a"
+  end
+
+  depends_on "readline"
+  depends_on "openssl"
 
   def install
     ENV.enable_warnings # -w causes build to fail
     system "./configure", "--prefix=#{prefix}", "--mandir=#{man}"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    output = pipe_output("#{bin}/socat - tcp:www.google.com:80", "GET / HTTP/1.0\r\n\r\n")
+    assert_match "HTTP/1.0", output
   end
 end

@@ -1,14 +1,13 @@
-require "formula"
-
 class Clamav < Formula
+  desc "Anti-virus software"
   homepage "http://www.clamav.net/"
-  url "https://downloads.sourceforge.net/clamav/clamav-0.98.5.tar.gz"
-  sha1 "5f5e45735819e3ca61610899b779172a5639f70f"
+  url "http://www.clamav.net/downloads/production/clamav-0.99.1.tar.gz"
+  sha256 "e144689122d3f91293808c82cbb06b7d3ac9eca7ae29564c5d148ffe7b25d58a"
 
   bottle do
-    sha1 "181a03aa6d5e1ebc7dd1a200a7cf0b3e574188cf" => :yosemite
-    sha1 "70333337e5f516c0e7a091a458f9cb166b805239" => :mavericks
-    sha1 "1e693ec6df51b2c8095feffce49850c32a409c35" => :mountain_lion
+    sha256 "f1febe378c19074dd99542d20156ebed49ebab91ebb5ba27d9a095f6bf9121f0" => :el_capitan
+    sha256 "1b13689bef5dd5afb06da556bea1030f04c4d100bac96dfd83bde0adc135e067" => :yosemite
+    sha256 "a7ca98533a103e466d3724ffe32f28f2891f0a97a1e96e644cd692f16c502590" => :mavericks
   end
 
   head do
@@ -19,26 +18,34 @@ class Clamav < Formula
     depends_on "libtool" => :build
   end
 
+  depends_on "pkg-config" => :build
   depends_on "openssl"
+  depends_on "yara" => :optional
   depends_on "json-c" => :optional
+  depends_on "pcre" => :optional
 
   skip_clean "share/clamav"
 
   def install
-    args = [ "--disable-dependency-tracking",
-             "--disable-silent-rules",
-             "--prefix=#{prefix}",
-             "--libdir=#{lib}",
-             "--sysconfdir=#{etc}/clamav",
-             "--disable-zlib-vcheck",
-             "--with-zlib=#{MacOS.sdk_path}/usr",
-             "--with-openssl=#{Formula["openssl"].opt_prefix}"
+    args = %W[
+      --disable-dependency-tracking
+      --disable-silent-rules
+      --prefix=#{prefix}
+      --libdir=#{lib}
+      --sysconfdir=#{etc}/clamav
+      --disable-zlib-vcheck
+      --with-zlib=#{MacOS.sdk_path}/usr
+      --with-openssl=#{Formula["openssl"].opt_prefix}
+      --enable-llvm=no
     ]
 
     args << "--with-libjson=#{Formula["json-c"].opt_prefix}" if build.with? "json-c"
+    args << "--with-pcre=#{Formula["pcre"].opt_prefix}" if build.with? "pcre"
+    args << "--disable-yara" if build.without? "yara"
+    args << "--without-pcre" if build.without? "pcre"
 
-    (share/"clamav").mkpath
-    system "autoreconf", "-i" if build.head?
+    pkgshare.mkpath
+    system "autoreconf", "-fvi" if build.head?
     system "./configure", *args
     system "make", "install"
   end

@@ -1,17 +1,16 @@
-# GnuTLS has previous, current, and next stable branches, we use current.
-# From 3.4.0 GnuTLS will be permanently disabling SSLv3. Every brew uses will need a revision with that.
-# http://nmav.gnutls.org/2014/10/what-about-poodle.html
 class Gnutls < Formula
-  homepage "http://gnutls.org"
-  url "ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
-  mirror "http://mirrors.dotsrc.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
-  sha256 "aef28d629b6ba824bd435f9b23506525e657e3746d4aa021296b13cbaaa6ae71"
+  desc "GNU Transport Layer Security (TLS) Library"
+  homepage "http://gnutls.org/"
+  url "ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-3.4.10.tar.xz"
+  mirror "https://gnupg.org/ftp/gcrypt/gnutls/v3.4/gnutls-3.4.10.tar.xz"
+  mirror "https://www.mirrorservice.org/sites/ftp.gnupg.org/gcrypt/gnutls/v3.4/gnutls-3.4.10.tar.xz"
+  sha256 "6a32c2b4acbd33ff7eefcbd1357009da04c94c60146ef61320b6c076b1bdf59f"
 
   bottle do
     cellar :any
-    sha1 "09178a60426edaa938111aa5dcf10f361a8669c5" => :yosemite
-    sha1 "7174f04eaba8478eb4df571fd618ae9dbd0ddaa8" => :mavericks
-    sha1 "d85219bb39f3d025e92d2124acd05f0865d369ae" => :mountain_lion
+    sha256 "67c8d5b3352b247bf3add9046955a8a93ac4e5333885d23fd78da91f4bb21bdf" => :el_capitan
+    sha256 "d4a023c35c48040c70287e153edfa6db16ba02bfdbaa99c67a15d51ff7e4fd40" => :yosemite
+    sha256 "5ebc275d280838614d812330b95f263ad2dff60b81ad5ada2b8ccba7145138d3" => :mavericks
   end
 
   depends_on "pkg-config" => :build
@@ -19,7 +18,6 @@ class Gnutls < Formula
   depends_on "gmp"
   depends_on "nettle"
   depends_on "guile" => :optional
-  depends_on "p11-kit" => :optional
   depends_on "unbound" => :optional
 
   fails_with :llvm do
@@ -36,6 +34,7 @@ class Gnutls < Formula
       --sysconfdir=#{etc}
       --with-default-trust-store-file=#{etc}/openssl/cert.pem
       --disable-heartbeat-support
+      --without-p11-kit
     ]
 
     if build.with? "guile"
@@ -47,15 +46,36 @@ class Gnutls < Formula
     system "make", "install"
 
     # certtool shadows the OS X certtool utility
-    mv bin+"certtool", bin+"gnutls-certtool"
-    mv man1+"certtool.1", man1+"gnutls-certtool.1"
+    mv bin/"certtool", bin/"gnutls-certtool"
+    mv man1/"certtool.1", man1/"gnutls-certtool.1"
   end
 
   def post_install
-    Formula["openssl"].post_install
+    keychains = %w[
+      /Library/Keychains/System.keychain
+      /System/Library/Keychains/SystemRootCertificates.keychain
+    ]
+
+    certs_list = `security find-certificate -a -p #{keychains.join(" ")}`
+    certs = certs_list.scan(
+      /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
+    )
+
+    valid_certs = certs.select do |cert|
+      IO.popen("openssl x509 -inform pem -checkend 0 -noout", "w") do |openssl_io|
+        openssl_io.write(cert)
+        openssl_io.close_write
+      end
+
+      $?.success?
+    end
+
+    openssldir = etc/"openssl"
+    openssldir.mkpath
+    (openssldir/"cert.pem").atomic_write(valid_certs.join("\n"))
   end
 
   test do
-    system "#{bin}/gnutls-cli", "--version"
+    system bin/"gnutls-cli", "--version"
   end
 end

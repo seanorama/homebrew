@@ -1,16 +1,15 @@
-require "formula"
-
 class MediaInfo < Formula
+  desc "Unified display of technical and tag data for audio/video"
   homepage "https://mediaarea.net/"
-  url "https://mediaarea.net/download/binary/mediainfo/0.7.71/MediaInfo_CLI_0.7.71_GNU_FromSource.tar.bz2"
-  version "0.7.71"
-  sha1 "d650d3202d1aa2b8af02a7ca53e04ee2c0f227d0"
+  url "https://mediaarea.net/download/binary/mediainfo/0.7.83/MediaInfo_CLI_0.7.83_GNU_FromSource.tar.bz2"
+  version "0.7.83"
+  sha256 "c39681085f3030dca042cbff8d19b6625df1af295eb0a0dc189ec67b1963bd7d"
 
   bottle do
     cellar :any
-    sha1 "93961776e55ad1c47a989f921426b8984ec5ae92" => :yosemite
-    sha1 "25bdcd8df95d77095eb304ed4633ddea6c6dee0c" => :mavericks
-    sha1 "e580796e61e1f30b05ac376089a3ec000b416a47" => :mountain_lion
+    sha256 "d64258cf7d118e4877940d77da5491ead5037c9459c26b918b9e336e7b459dc5" => :el_capitan
+    sha256 "34822a75a7390c118161e1d2e0e57dc16bd160fcb6fe401791103a1f060455bf" => :yosemite
+    sha256 "68eab7eb67939e945a76f4f7ce807cbcbf5f3a93eba89278ea2e8ea32fb6cf8a" => :mavericks
   end
 
   depends_on "pkg-config" => :build
@@ -28,15 +27,21 @@ class MediaInfo < Formula
       args = ["--disable-debug",
               "--disable-dependency-tracking",
               "--with-libcurl",
+              "--enable-static",
+              "--enable-shared",
               "--prefix=#{prefix}"]
       system "./configure", *args
-      system "make install"
+      system "make", "install"
     end
 
     cd "MediaInfo/Project/GNU/CLI" do
       system "./configure", "--disable-debug", "--disable-dependency-tracking",
                             "--prefix=#{prefix}"
-      system "make install"
+      system "make", "install"
     end
+  end
+
+  test do
+    pipe_output("#{bin}/mediainfo", test_fixtures("test.mp3"))
   end
 end

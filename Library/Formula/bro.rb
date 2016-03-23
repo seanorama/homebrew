@@ -1,33 +1,29 @@
-require "formula"
-
 class Bro < Formula
+  desc "Network security monitor"
   homepage "https://www.bro.org"
+  url "https://www.bro.org/downloads/release/bro-2.4.1.tar.gz"
+  sha256 "d8b99673a5024630f6bae820c4f8c3ca9029f1167f9e5729c914c66e1fc7c8f6"
   head "https://github.com/bro/bro.git"
 
-  stable do
-    url "https://www.bro.org/downloads/release/bro-2.3.1.tar.gz"
-    sha256 "ff32d21e335d2ddb3e2942527c3212de6ead4e7ffd6ac958497fa80e04e60800"
-
-    # Fix for ntohll errrors on Yosemite. Already in HEAD.
-    patch do
-      url "https://github.com/bro/bro/commit/121fcdbb5b9221.diff"
-      sha1 "985cede121964a96fe10c81f2239d1f0c137c517"
-    end
-  end
-
   bottle do
-    sha1 "19d44e396ea474a01625333cc005d59c15a1a779" => :yosemite
-    sha1 "3ec9e7b7c05b68668f6559322372a2f57344f735" => :mavericks
-    sha1 "6e69354144ece0c4b99fe0c8f07c353e5892bf3c" => :mountain_lion
+    revision 1
+    sha256 "a48cb079b41fe45aad9e4acf3f9d6ef774569cfa14b970a9e205c40882147848" => :el_capitan
+    sha256 "fb0a8b536d58745f837a3e5731e6c34c09dd4542ca33c523860c3c9aea6dea84" => :yosemite
+    sha256 "e0aab7ebf5af8aea92fadc1df19f2ad6d65a2a1a91f62ecd4a2c2146466b989c" => :mavericks
   end
 
   depends_on "cmake" => :build
   depends_on "swig" => :build
-  depends_on "geoip" => :recommended
   depends_on "openssl"
+  depends_on "geoip" => :recommended
+
+  conflicts_with "brotli", :because => "Both install a `bro` binary"
 
   def install
-    system "./configure", "--prefix=#{prefix}", "--with-openssl=#{Formula["openssl"].opt_prefix}"
+    system "./configure", "--prefix=#{prefix}",
+                          "--with-openssl=#{Formula["openssl"].opt_prefix}",
+                          "--localstatedir=#{var}",
+                          "--conf-files-dir=#{etc}"
     system "make", "install"
   end
 

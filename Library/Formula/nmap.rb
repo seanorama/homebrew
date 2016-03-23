@@ -1,21 +1,19 @@
-require 'formula'
-
 class Nmap < Formula
-  homepage "http://nmap.org/"
+  desc "Port scanning utility for large networks"
+  homepage "https://nmap.org/"
+  url "https://nmap.org/dist/nmap-7.10.tar.bz2"
+  sha256 "58cf8896d09057d1c3533f430c06b22791d0227ebbb93dede2ccb73693ed4b4b"
   head "https://guest:@svn.nmap.org/nmap/", :using => :svn
-  url "http://nmap.org/dist/nmap-6.47.tar.bz2"
-  sha1 "0c917453a91a5e85c2a217d27c3853b0f3e0e6ac"
 
   bottle do
-    revision 1
-    sha1 "f866508268e57a381a1c2456456c5580f83e5bc4" => :mavericks
-    sha1 "c80f12d6d1a52bca5ff152404a84a5c4436ba7b3" => :mountain_lion
-    sha1 "28da4ac4b94c636b1acd02ca1b17cbb799f86f3f" => :lion
+    sha256 "05d373af1509126f5be52bf24e5e15f0910b7dfa0e49f7b923960c83f9a37d24" => :el_capitan
+    sha256 "b1f3a5f7edb1a3bd328eebbf8dd2175ea22db05c552115fde70651240d770554" => :yosemite
+    sha256 "94585a4e818543710769e2fa17f5f2abba2082d278cf45e47e40941ce64c20ec" => :mavericks
   end
 
   depends_on "openssl"
 
-  conflicts_with 'ndiff', :because => 'both install `ndiff` binaries'
+  conflicts_with "ndiff", :because => "both install `ndiff` binaries"
 
   fails_with :llvm do
     build 2334
@@ -28,7 +26,7 @@ class Nmap < Formula
       --prefix=#{prefix}
       --with-libpcre=included
       --with-liblua=included
-      --with-openssl=#{Formula["openssl"].prefix}
+      --with-openssl=#{Formula["openssl"].opt_prefix}
       --without-nmap-update
       --without-zenmap
       --disable-universal
@@ -36,10 +34,10 @@ class Nmap < Formula
 
     system "./configure", *args
     system "make" # separate steps required otherwise the build fails
-    system "make install"
+    system "make", "install"
   end
 
   test do
-    system "#{bin}/nmap", '-p80,443', 'google.com'
+    system "#{bin}/nmap", "-p80,443", "google.com"
   end
 end

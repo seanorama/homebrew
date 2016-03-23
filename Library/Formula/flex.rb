@@ -1,13 +1,13 @@
 class Flex < Formula
+  desc "Fast Lexical Analyzer, generates Scanners (tokenizers)"
   homepage "http://flex.sourceforge.net"
-  url "https://downloads.sourceforge.net/flex/flex-2.5.37.tar.bz2"
-  sha1 "db4b140f2aff34c6197cab919828cc4146aae218"
+  url "https://downloads.sourceforge.net/flex/flex-2.6.0.tar.bz2"
+  sha256 "24e611ef5a4703a191012f80c1027dc9d12555183ce0ecd46f3636e587e9b8e9"
 
   bottle do
-    revision 1
-    sha1 "0a2bb0ce9a49330e5fd40b6e409a353972cf8840" => :yosemite
-    sha1 "0dd7fc9c36a6258b2e456e7dd0c5818d07e2a2ea" => :mavericks
-    sha1 "69b5f449a9c0bf5fd37f999dca5ccfd120a6f389" => :mountain_lion
+    sha256 "5ff47ed93df4c58a708c88d5638180dc989e17f1ac0ef2caf13bba20d32e646a" => :el_capitan
+    sha256 "a66259c848d0afb9b825b8f3cf9a303c33e815d5ba419a1c5401342d1ff43a9f" => :yosemite
+    sha256 "b2aeeaaa2b4de481c5b4fad5e3250b5e3e878bb7dd321b5234575d2b184a86be" => :mavericks
   end
 
   keg_only :provided_by_osx, "Some formulae require a newer version of flex."
@@ -16,6 +16,7 @@ class Flex < Formula
 
   def install
     system "./configure", "--disable-dependency-tracking",
+                          "--disable-shared",
                           "--prefix=#{prefix}"
     system "make", "install"
   end

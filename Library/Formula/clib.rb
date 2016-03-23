@@ -1,15 +1,16 @@
 class Clib < Formula
+  desc "Package manager for C programming"
   homepage "https://github.com/clibs/clib"
-  url "https://github.com/clibs/clib/archive/1.4.1.tar.gz"
-  sha1 "f1d5dbd76d8ad75204d182f9db1b197e311fa25e"
+  url "https://github.com/clibs/clib/archive/1.7.0.tar.gz"
+  sha256 "08a342769399525814f74bf989e33d6b416cfd99ee2e4238738ab1187fa27fbb"
 
   head "https://github.com/clibs/clib.git"
 
   bottle do
-    cellar :any
-    sha1 "3c00a49b63b1aebd8455fcc4294910c619df0539" => :yosemite
-    sha1 "54593525512d3d10f18fcac29e8fece198242f75" => :mavericks
-    sha1 "9ff299d4acd909c7087237788c8dff55a4247ea4" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "49a968b7a2996481bc3481477decdb546af828fc31a3efa68bbf8088a189caef" => :el_capitan
+    sha256 "cea4541a53eb7b83e3a851ceb2a16fcccf3ba31a2d5b2e31f76a9d5c157da427" => :yosemite
+    sha256 "bc5b305a7ca4c4c16fcb135dc43090887e657d4c78497df25cef888d45fa2952" => :mavericks
   end
 
   def install

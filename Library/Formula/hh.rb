@@ -1,15 +1,14 @@
-require "formula"
-
 class Hh < Formula
+  desc "Bash and zsh history suggest box"
   homepage "https://github.com/dvorka/hstr"
-  url "https://github.com/dvorka/hstr/releases/download/1.13/hh-1.13-src.tgz"
-  sha1 "09fee6d687a8b8a7c6f508ced071fb88b0a9bb28"
+  url "https://github.com/dvorka/hstr/releases/download/1.19/hh-1.19-src.tgz"
+  sha256 "b67cb5e2515948fd0fb402b732630a51885be5dfe58cbf914c22ea444129a647"
 
   bottle do
     cellar :any
-    sha1 "3110fabac2e10d0bd49f0893a9bff1babf8ad4d3" => :yosemite
-    sha1 "9e7f8e5fab6fdfb0151eb426a97187e7abeb8519" => :mavericks
-    sha1 "e31eebb154535a7fc7e35a498178e1163068e4fb" => :mountain_lion
+    sha256 "b241ad9ec87ae46d2e125fa939294a6aea603fc857aeea030526954290bfee18" => :el_capitan
+    sha256 "f737693414e21b5ab9c434be4ffd5923fb4ccc153c4039ba2a65dea4f1010a95" => :yosemite
+    sha256 "b87d487cb1a2d951d9b38c651dda2cc6f3161e183a2174d033f220c0b9bb2cda" => :mavericks
   end
 
   head do
@@ -22,13 +21,7 @@ class Hh < Formula
   depends_on "readline"
 
   def install
-    # Upstream bug report for curses/ncursesw:
-    # https://github.com/dvorka/hstr/issues/103
-    if build.head?
-      inreplace %w(src/hstr.c src/include/hstr_curses.h), "ncursesw/", ""
-      system "autoreconf", "-fvi"
-    end
-    inreplace "configure", "ncursesw", "ncurses"
+    system "autoreconf", "-fvi" if build.head?
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make", "install"

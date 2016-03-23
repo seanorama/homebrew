@@ -1,23 +1,14 @@
-require "formula"
-
 class Wireshark < Formula
+  desc "Graphical network analyzer and capture tool"
   homepage "https://www.wireshark.org"
-
-  stable do
-    url "https://www.wireshark.org/download/src/all-versions/wireshark-1.12.2.tar.bz2"
-    mirror "https://1.eu.dl.wireshark.org/src/wireshark-1.12.2.tar.bz2"
-    sha1 "0598fe285725f97045d7d08e6bde04686044b335"
-
-    # Removes SDK checks that prevent the build from working on CLT-only systems
-    # Reported upstream: https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=9290
-    patch :DATA
-  end
+  url "https://www.wireshark.org/download/src/all-versions/wireshark-2.0.2.tar.bz2"
+  mirror "https://1.eu.dl.wireshark.org/src/wireshark-2.0.2.tar.bz2"
+  sha256 "e921fb072085a5654d899949bb561d0687f4819f7b63ba35777bb949a9b6b9c1"
 
   bottle do
-    revision 2
-    sha1 "6f7662eeef5a2827e65717725dcfc6f035104d27" => :yosemite
-    sha1 "4132e4ced51696ff52513ec55d5be79754f58d95" => :mavericks
-    sha1 "d9dee8926b364e76420aef082c17370fd65f72ac" => :mountain_lion
+    sha256 "2e0b785e227013631cb4d389245a37156ad82abb573472aa803d0e93c16aa2b2" => :el_capitan
+    sha256 "07aff65dd89f2d59bee939b245c031108ac441dd622378d7d3a73d7554a07d8f" => :yosemite
+    sha256 "7ef1a8ecdca2a87ef33414bd076fa65bc79bee4a6691a3c0445460eb0a17d432" => :mavericks
   end
 
   head do
@@ -28,15 +19,10 @@ class Wireshark < Formula
     depends_on "libtool" => :build
   end
 
-  devel do
-    url "https://www.wireshark.org/download/src/all-versions/wireshark-1.99.0.tar.bz2"
-    mirror "https://1.eu.dl.wireshark.org/src/wireshark-1.99.0.tar.bz2"
-    sha1 "2e5cf3209104b98251350b3a5e52401866916aec"
-  end
-
   option "with-gtk+3", "Build the wireshark command with gtk+3"
   option "with-gtk+", "Build the wireshark command with gtk+"
   option "with-qt", "Build the wireshark-qt command (can be used with or without either GTK option)"
+  option "with-qt5", "Build the wireshark-qt command with qt5 (can be used with or without either GTK option)"
   option "with-headers", "Install Wireshark library headers for plug-in development"
 
   depends_on "pkg-config" => :build
@@ -52,24 +38,49 @@ class Wireshark < Formula
   depends_on "libsmi" => :optional
   depends_on "lua" => :optional
   depends_on "portaudio" => :optional
+  depends_on "qt5" => :optional
   depends_on "qt" => :optional
   depends_on "gtk+3" => :optional
   depends_on "gtk+" => :optional
-  depends_on "homebrew/dupes/libpcap" => :optional
   depends_on "gnome-icon-theme" if build.with? "gtk+3"
 
-  def install
-    args = ["--disable-dependency-tracking",
-            "--disable-silent-rules",
-            "--prefix=#{prefix}",
-            "--with-gnutls"]
+  resource "libpcap" do
+    url "http://www.tcpdump.org/release/libpcap-1.7.4.tar.gz"
+    sha256 "7ad3112187e88328b85e46dce7a9b949632af18ee74d97ffc3f2b41fe7f448b0"
+  end
 
-    args << "--disable-wireshark" if build.without?("gtk+3") && build.without?("qt") && build.without?("gtk+")
+  def install
+    if MacOS.version <= :mavericks
+      resource("libpcap").stage do
+        system "./configure", "--prefix=#{libexec}/vendor",
+                              "--enable-ipv6",
+                              "--disable-universal"
+        system "make", "install"
+      end
+      ENV.prepend_path "PATH", libexec/"vendor/bin"
+      ENV.prepend "CFLAGS", "-I#{libexec}/vendor/include"
+      ENV.prepend "LDFLAGS", "-L#{libexec}/vendor/lib"
+    end
+
+    no_gui = build.without?("gtk+3") && build.without?("qt") && build.without?("gtk+") && build.without?("qt5")
+
+    args = %W[
+      --disable-dependency-tracking
+      --disable-silent-rules
+      --prefix=#{prefix}
+      --with-gnutls
+    ]
+
+    args << "--disable-wireshark" if no_gui
     args << "--disable-gtktest" if build.without?("gtk+3") && build.without?("gtk+")
-    args << "--with-qt" if build.with? "qt"
     args << "--with-gtk3" if build.with? "gtk+3"
     args << "--with-gtk2" if build.with? "gtk+"
-    args << "--with-libcap=#{Formula["libpcap"].opt_prefix}" if build.with? "libpcap"
+
+    if build.with?("qt") || build.with?("qt5")
+      args << "--with-qt"
+    else
+      args << "--with-qt=no"
+    end
 
     if build.head?
       args << "--disable-warnings-as-errors"
@@ -113,58 +124,8 @@ class Wireshark < Formula
   end
 
   test do
-    system "#{bin}/randpkt", "-b", "100", "-c", "2", "capture.pcap"
+    system bin/"randpkt", "-b", "100", "-c", "2", "capture.pcap"
     output = shell_output("#{bin}/capinfos -Tmc capture.pcap")
     assert_equal "File name,Number of packets\ncapture.pcap,2\n", output
   end
 end
-
-__END__
-diff --git a/configure b/configure
-index cd41b63..c473fe7 100755
---- a/configure
-+++ b/configure
-@@ -16703,42 +16703,12 @@ $as_echo "yes" >&6; }
- 				break
- 			fi
- 		done
--		if test -z "$SDKPATH"
--		then
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
--$as_echo "no" >&6; }
--			as_fn_error $? "We couldn't find the SDK for OS X $deploy_target" "$LINENO" 5
--		fi
- 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
- $as_echo "yes" >&6; }
- 		;;
- 	esac
-
- 	#
--	# Add a -mmacosx-version-min flag to force tests that
--	# use the compiler, as well as the build itself, not to,
--	# for example, use compiler or linker features not supported
--	# by the minimum targeted version of the OS.
--	#
--	# Add an -isysroot flag to use the SDK.
--	#
--	CFLAGS="-mmacosx-version-min=$deploy_target -isysroot $SDKPATH $CFLAGS"
--	CXXFLAGS="-mmacosx-version-min=$deploy_target -isysroot $SDKPATH $CXXFLAGS"
--	LDFLAGS="-mmacosx-version-min=$deploy_target -isysroot $SDKPATH $LDFLAGS"
--
--	#
--	# Add a -sdkroot flag to use with osx-app.sh.
--	#
--	OSX_APP_FLAGS="-sdkroot $SDKPATH"
--
--	#
--	# XXX - do we need this to build the Wireshark wrapper?
--	# XXX - is this still necessary with the -mmacosx-version-min
--	# flag being set?
--	#
--	OSX_DEPLOY_TARGET="MACOSX_DEPLOYMENT_TARGET=$deploy_target"
--
--	#
- 	# In the installer package XML file, give the deployment target
- 	# as the minimum version.
- 	#
-

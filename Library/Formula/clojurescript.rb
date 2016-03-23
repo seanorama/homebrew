@@ -1,24 +1,16 @@
-require "formula"
-
 class Clojurescript < Formula
+  desc "Clojure to JS compiler"
   homepage "https://github.com/clojure/clojurescript"
+  url "https://github.com/clojure/clojurescript/releases/download/r1.7.228/cljs.jar"
+  version "1.7.228"
+  sha256 "c6cb68becc82dbcd3956a361d574abe7202f7b61cb8bd9d4ea31805a5910dc11"
   head "https://github.com/clojure/clojurescript.git"
-  url "https://github.com/clojure/clojurescript/archive/r2411.tar.gz"
-  sha1 "99022cf050aa5f712b295e74aa8e845ad6cdb4b8"
 
-  bottle do
-    cellar :any
-    sha1 "09c172126af27f251d97faf51bccec08701b02b4" => :yosemite
-    sha1 "01b25ba53a056b9a5bbd895c69c8a9d7bb981ff8" => :mavericks
-    sha1 "67852244cdfaaf0df84b8bcec440fe43fb719b6f" => :mountain_lion
-  end
+  bottle :unneeded
 
   def install
-    system "./script/bootstrap"
-    inreplace %w(bin/cljsc script/repl script/repljs script/browser-repl),
-      "#!/bin/sh", "#!/bin/sh\nCLOJURESCRIPT_HOME=#{libexec}"
-    libexec.install Dir["*"]
-    bin.write_exec_script libexec/"bin/cljsc"
+    libexec.install "cljs.jar"
+    bin.write_jar_script libexec/"cljs.jar", "cljsc"
   end
 
   def caveats; <<-EOS.undent

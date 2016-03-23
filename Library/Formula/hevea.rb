@@ -1,17 +1,16 @@
-require "formula"
-
 class Hevea < Formula
+  desc "LaTeX-to-HTML translator"
   homepage "http://hevea.inria.fr/"
-  url "http://hevea.inria.fr/distri/hevea-2.19.tar.gz"
-  sha1 "59c0d35819c83b6558490b36f1113cdb4d49e919"
+  url "http://hevea.inria.fr/old/hevea-2.25.tar.gz"
+  sha256 "e4c75b550bb2aa663052063d979dd1490fd7817e7cbb97b208dee92ed24ec94e"
 
   bottle do
-    sha1 "85895fc6d991f57fe1a0e9ecbc083d335c7cf704" => :yosemite
-    sha1 "d45bb32ad08211b304ae6c87f49727505ad81d33" => :mavericks
-    sha1 "85d66fad38057feaa11c615dfdd7be4c921baca5" => :mountain_lion
+    sha256 "0ffbef5c06e466891bbd0fa4dca681a3a613630bdf1cf51c5da7af434994e82c" => :el_capitan
+    sha256 "2e663e23b412c82ddae6806bc48159b099016b79b5a42cfb670e1aaec3e2c634" => :yosemite
+    sha256 "0fcd8481e090cbfc71ff697b46d83b32effa0983738181a8da3ecf5cf3f55272" => :mavericks
   end
 
-  depends_on "objective-caml"
+  depends_on "ocaml"
   depends_on "ghostscript" => :optional
 
   def install

@@ -1,42 +1,48 @@
 class Autojump < Formula
-  homepage "https://github.com/joelthelion/autojump"
-  url "https://github.com/joelthelion/autojump/archive/release-v22.2.2.tar.gz"
-  sha1 "d23d482077049fb07dcdc1e7764694f95937db24"
+  desc "Shell extension to jump to frequently used directories"
+  homepage "https://github.com/wting/autojump"
+  url "https://github.com/wting/autojump/archive/release-v22.3.0.tar.gz"
+  sha256 "800f444b820b3a985e1da2d183fb5e2e23753a2ade53d6e1195678c650379a03"
 
-  head "https://github.com/joelthelion/autojump.git"
+  head "https://github.com/wting/autojump.git"
+
+  bottle do
+    cellar :any_skip_relocation
+    sha256 "b1d061456b911c1a36216ee3e6569a73aad5e1e9994fb0ba515715a43675811e" => :el_capitan
+    sha256 "08e603c2689a7ac96839cdd6b02f1c1b1803e50598dcd5eaef73d5b7d9275bc6" => :yosemite
+    sha256 "374c3703dab50849119b2d511eeca5fa7523df903fa2ae34acf334c229343182" => :mavericks
+  end
 
   def install
-    inreplace "bin/autojump.sh", " /usr/local/share/autojump/", " #{prefix}/etc/"
+    system "./install.py", "-d", prefix, "-z", zsh_completion
 
-    libexec.install "bin/autojump"
-    libexec.install "bin/autojump_argparse.py", "bin/autojump_data.py", "bin/autojump_utils.py"
-    man1.install "docs/autojump.1"
-    (prefix/"etc").install "bin/autojump.sh", "bin/autojump.bash", "bin/autojump.zsh",
-                           "bin/autojump.fish", "bin/autojump.tcsh"
-    zsh_completion.install "bin/_j"
+    # Backwards compatibility for users that have the old path in .bash_profile
+    # or .zshrc
+    (prefix/"etc").install_symlink prefix/"etc/profile.d/autojump.sh"
 
-    bin.write_exec_script libexec+"autojump"
+    libexec.install bin
+    bin.write_exec_script libexec/"bin/autojump"
   end
 
   def caveats; <<-EOS.undent
     Add the following line to your ~/.bash_profile or ~/.zshrc file (and remember
     to source the file to update your current session):
-      [[ -s $(brew --prefix)/etc/autojump.sh ]] && . $(brew --prefix)/etc/autojump.sh
+      [[ -s $(brew --prefix)/etc/profile.d/autojump.sh ]] && . $(brew --prefix)/etc/profile.d/autojump.sh
 
-    Add the following line to your ~/.config/fish/config.fish:
-      . #{etc}/autojump.fish
+    If you use the Fish shell then add the following line to your ~/.config/fish/config.fish:
+      [ -f #{HOMEBREW_PREFIX}/share/autojump/autojump.fish ]; and . #{HOMEBREW_PREFIX}/share/autojump/autojump.fish
     EOS
   end
 
   test do
     path = testpath/"foo"
     path.mkdir
-    output = %x{
-      source #{HOMEBREW_PREFIX}/etc/autojump.sh
+    output = %x(
+      source #{HOMEBREW_PREFIX}/etc/profile.d/autojump.sh
       j -a foo
       j foo >/dev/null
       pwd
-    }.strip
+    ).strip
     assert_equal path.to_s, output
   end
 end

@@ -1,15 +1,15 @@
-require "formula"
-
 class Ocamlsdl < Formula
+  desc "OCaml interface with the SDL C library"
   homepage "http://ocamlsdl.sourceforge.net/"
   url "https://downloads.sourceforge.net/project/ocamlsdl/OCamlSDL/ocamlsdl-0.9.1/ocamlsdl-0.9.1.tar.gz"
-  sha1 "2e54f8984b06cede493c3ad29006dde17077a79a"
+  sha256 "abfb295b263dc11e97fffdd88ea1a28b46df8cc2b196777093e4fe7f509e4f8f"
+  revision 1
 
   bottle do
     cellar :any
-    sha1 "69e4eab5739ee4cece742d1064c36f61fb055395" => :mavericks
-    sha1 "d12bd3c25db05daa8e2a9a40f8f4d821b0e31073" => :mountain_lion
-    sha1 "c2d29344d6062efb1a5c5dced9de2b58d3778312" => :lion
+    sha256 "07e016c5fa22b040d4f6081bc5f63657d02cf08810ff0bd1271e3ccb81b386e7" => :yosemite
+    sha256 "4708ebcb0d84023df49191db0d0af8d194247e882cf54c49c8165ba176b5ff59" => :mavericks
+    sha256 "fa6e3d9f55b354bab9d346a046de292a2c813193087f62ee55c5d10d348097b8" => :mountain_lion
   end
 
   depends_on "sdl"
@@ -17,7 +17,7 @@ class Ocamlsdl < Formula
   depends_on "sdl_image" => :recommended
   depends_on "sdl_gfx" => :recommended
   depends_on "sdl_ttf" => :recommended
-  depends_on "objective-caml"
+  depends_on "ocaml"
 
   def install
     system "./configure", "--prefix=#{prefix}",
@@ -27,7 +27,7 @@ class Ocamlsdl < Formula
   end
 
   test do
-    (testpath/'test.ml').write <<-EOS.undent
+    (testpath/"test.ml").write <<-EOS.undent
       let main () =
         Sdl.init [`VIDEO];
         Sdl.quit ()

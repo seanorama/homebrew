@@ -1,28 +1,25 @@
 class Weechat < Formula
+  desc "Extensible IRC client"
   homepage "https://www.weechat.org"
-  url "https://weechat.org/files/src/weechat-1.0.1.tar.gz"
-  sha1 "1d33591b6c0adc2c30b36a7b349603cbdbcb40b2"
-
-  devel do
-    url "https://github.com/weechat/weechat/archive/v1.1-rc1.tar.gz"
-    sha1 "3cf06cfead34fe351a0e3eb53144cbf3f68bc7e5"
-    version "1.1-rc1"
-  end
+  url "https://weechat.org/files/src/weechat-1.4.tar.gz"
+  sha256 "51859bf3b26ffeed95c0a3399167e6670e8240542c52772439fb9cade06857a5"
+  revision 2
 
   head "https://github.com/weechat/weechat.git"
 
   bottle do
-    revision 1
-    sha1 "e5cbebaca9b73342b07bf8302eb78157a8929660" => :yosemite
-    sha1 "36a7f4ac899bd4aec97a6cdba9c769bc1b0815c8" => :mavericks
-    sha1 "a76c212cf886cef42113bef355936ac58ff3084a" => :mountain_lion
+    sha256 "db3a54440dffabf0fd061295eb23a67685f3337303df4c15f1c917823b4c765d" => :el_capitan
+    sha256 "e154dafd4f0cbf1fb568e23c8b1e4868b4feaab537e638155a2c3457a4800cf7" => :yosemite
+    sha256 "45406a9280b5f34da630867ba5aa413b90c2f044718e36de5fe5eb365dc28ee6" => :mavericks
   end
 
   option "with-perl", "Build the perl module"
   option "with-ruby", "Build the ruby module"
   option "with-curl", "Build with brewed curl"
+  option "with-debug", "Build with debug information"
 
   depends_on "cmake" => :build
+  depends_on "pkg-config" => :build
   depends_on "gnutls"
   depends_on "libgcrypt"
   depends_on "gettext"
@@ -33,21 +30,19 @@ class Weechat < Formula
   depends_on "curl" => :optional
 
   def install
-    # builds against the python in PATH by asking cmake to use introspected
-    # values instead of ignoring them
-    # https://github.com/weechat/weechat/pull/217
-    if build.stable?
-      inreplace "cmake/FindPython.cmake", "PATHS ${", "HINTS ${"
+    args = std_cmake_args
+    if build.with? "debug"
+      args -= %w[-DCMAKE_BUILD_TYPE=Release]
+      args << "-DCMAKE_BUILD_TYPE=Debug"
     end
 
-    args = std_cmake_args
-
-    args << "-DENABLE_LUA=OFF"    if build.without? "lua"
-    args << "-DENABLE_PERL=OFF"   if build.without? "perl"
-    args << "-DENABLE_RUBY=OFF"   if build.without? "ruby"
+    args << "-DENABLE_LUA=OFF" if build.without? "lua"
+    args << "-DENABLE_PERL=OFF" if build.without? "perl"
+    args << "-DENABLE_RUBY=OFF" if build.without? "ruby"
     args << "-DENABLE_ASPELL=OFF" if build.without? "aspell"
-    args << "-DENABLE_GUILE=OFF"  if build.without? "guile"
+    args << "-DENABLE_GUILE=OFF" if build.without? "guile"
     args << "-DENABLE_PYTHON=OFF" if build.without? "python"
+    args << "-DENABLE_JAVASCRIPT=OFF"
 
     mkdir "build" do
       system "cmake", "..", *args

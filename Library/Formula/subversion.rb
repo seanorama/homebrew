@@ -1,14 +1,15 @@
 class Subversion < Formula
+  desc "Version control system designed to be a better CVS"
   homepage "https://subversion.apache.org/"
-  url "http://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.8.10.tar.bz2"
-  mirror "http://archive.apache.org/dist/subversion/subversion-1.8.10.tar.bz2"
-  sha1 "d6896d94bb53c1b4c6e9c5bb1a5c466477b19b2b"
-  revision 2
+  url "https://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.9.3.tar.bz2"
+  mirror "https://archive.apache.org/dist/subversion/subversion-1.9.3.tar.bz2"
+  sha256 "8bbf6bb125003d88ee1c22935a36b7b1ab7d957e0c8b5fbfe5cb6310b6e86ae0"
 
   bottle do
-    sha1 "fea8a67fd177ba418c9185423d4ce8055d8f2ef5" => :yosemite
-    sha1 "ab3d546951f17ce2f2159a4e6bbf0c10b0c6a4c0" => :mavericks
-    sha1 "18a00000ae92b6b6bad79f3b84f0ffcba4e655f7" => :mountain_lion
+    revision 1
+    sha256 "954a141e7551a2355184d4d81c916220781969de535cbbd0a882ae82f58ca8dc" => :el_capitan
+    sha256 "26c1cab5285cec5eb8bf5d88a67c1520238b21db31268705b3ff16d2d1ad6412" => :yosemite
+    sha256 "d036ab9d228f61e63b12b8c6f845398424caaf7da68bdd8220ad6f5419583c89" => :mavericks
   end
 
   deprecated_option "java" => "with-java"
@@ -22,8 +23,8 @@ class Subversion < Formula
   option "with-gpg-agent", "Build with support for GPG Agent"
 
   resource "serf" do
-    url "https://serf.googlecode.com/svn/src_releases/serf-1.3.7.tar.bz2", :using => :curl
-    sha1 "db9ae339dba10a2b47f9bdacf30a58fd8e36683a"
+    url "https://serf.googlecode.com/svn/src_releases/serf-1.3.8.tar.bz2", :using => :curl
+    sha256 "e0500be065dbbce490449837bb2ab624e46d64fc0b090474d9acaa87c82b2590"
   end
 
   depends_on "pkg-config" => :build
@@ -34,7 +35,7 @@ class Subversion < Formula
   depends_on :python => :optional
 
   # Bindings require swig
-  depends_on "swig" if build.with? "perl" or build.with? "python" or build.with? "ruby"
+  depends_on "swig" if build.with?("perl") || build.with?("python") || build.with?("ruby")
 
   # For Serf
   depends_on "scons" => :build
@@ -42,12 +43,14 @@ class Subversion < Formula
 
   # Other optional dependencies
   depends_on "gpg-agent" => :optional
+  depends_on :java => :optional
 
   # Fix #23993 by stripping flags swig can't handle from SWIG_CPPFLAGS
   # Prevent "-arch ppc" from being pulled in from Perl's $Config{ccflags}
+  # Prevent linking into a Python Framework
   patch :DATA
 
-  if build.with? "perl" or build.with? "ruby"
+  if build.with?("perl") || build.with?("ruby")
     # If building bindings, allow non-system interpreters
     # Currently the serf -> scons dependency forces stdenv, so this isn't
     # strictly necessary
@@ -73,6 +76,7 @@ class Subversion < Formula
       inreplace "SConstruct", "unique=1", "unique=0"
 
       ENV.universal_binary if build.universal?
+
       # scons ignores our compiler and flags unless explicitly passed
       args = %W[PREFIX=#{serf_prefix} GSSAPI=/usr CC=#{ENV.cc}
                 CFLAGS=#{ENV.cflags} LINKFLAGS=#{ENV.ldflags}
@@ -83,20 +87,8 @@ class Subversion < Formula
         args << "APU=#{Formula["apr-util"].opt_prefix}"
       end
 
-      scons *args
+      scons(*args)
       scons "install"
-    end
-
-    if build.include? "unicode-path"
-      raise <<-EOS.undent
-        The --unicode-path patch is not supported on Subversion 1.8.
-
-        Upgrading from a 1.7 version built with this patch is not supported.
-
-        You should stay on 1.7, install 1.7 from homebrew-versions, or
-          brew rm subversion && brew install subversion
-        to build a new version of 1.8 without this patch.
-      EOS
     end
 
     if build.with? "java"
@@ -111,10 +103,6 @@ class Subversion < Formula
           `brew install subversion --universal --java`
         EOS
       end
-
-      if ENV["JAVA_HOME"]
-        opoo "JAVA_HOME is set. Try unsetting it if JNI headers cannot be found."
-      end
     end
 
     ENV.universal_binary if build.universal?
@@ -122,32 +110,41 @@ class Subversion < Formula
     # Use existing system zlib
     # Use dep-provided other libraries
     # Don't mess with Apache modules (since we're not sudo)
-    args = ["--disable-debug",
-            "--prefix=#{prefix}",
-            "--with-zlib=/usr",
-            "--with-sqlite=#{Formula["sqlite"].opt_prefix}",
-            "--with-serf=#{serf_prefix}",
-            "--disable-mod-activation",
-            "--disable-nls",
-            "--without-apache-libexecdir",
-            "--without-berkeley-db"]
+    args = %W[
+      --disable-debug
+      --prefix=#{prefix}
+      --with-zlib=/usr
+      --with-sqlite=#{Formula["sqlite"].opt_prefix}
+      --with-serf=#{serf_prefix}
+      --disable-mod-activation
+      --disable-nls
+      --without-apache-libexecdir
+      --without-berkeley-db
+    ]
 
     args << "--enable-javahl" << "--without-jikes" if build.with? "java"
     args << "--without-gpg-agent" if build.without? "gpg-agent"
 
-    unless MacOS::CLT.installed?
+    if MacOS::CLT.installed?
+      args << "--with-apr=/usr"
+      args << "--with-apr-util=/usr"
+    else
       args << "--with-apr=#{Formula["apr"].opt_prefix}"
       args << "--with-apr-util=#{Formula["apr-util"].opt_prefix}"
       args << "--with-apxs=no"
-    else
-      args << "--with-apr=/usr"
-      args << "--with-apr-util=/usr"
     end
 
     if build.with? "ruby"
       args << "--with-ruby-sitedir=#{lib}/ruby"
       # Peg to system Ruby
       args << "RUBY=/usr/bin/ruby"
+    end
+
+    # If Python is built universally, then extensions built with that Python
+    # are too. This default behaviour is not desired when building an extension
+    # for a single architecture.
+    if build.with?("python") && (which "python").universal? && !build.universal?
+      ENV["ARCHFLAGS"] = "-arch #{MacOS.preferred_arch}"
     end
 
     # The system Python is built with llvm-gcc, so we override this
@@ -169,6 +166,7 @@ class Subversion < Formula
     if build.with? "python"
       system "make", "swig-py"
       system "make", "install-swig-py"
+      (lib/"python2.7/site-packages").install_symlink Dir["#{lib}/svn-python/*"]
     end
 
     if build.with? "perl"
@@ -183,7 +181,7 @@ class Subversion < Formula
         arches = "-arch #{Hardware::CPU.arch_64_bit}"
       end
 
-      perl_core = Pathname.new(`perl -MConfig -e 'print $Config{archlib}'`)+'CORE'
+      perl_core = Pathname.new(`perl -MConfig -e 'print $Config{archlib}'`)+"CORE"
       unless perl_core.exist?
         onoe "perl CORE directory does not exist in '#{perl_core}'"
       end
@@ -193,11 +191,10 @@ class Subversion < Formula
           "$(SWIG_INCLUDES) #{arches} -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include -I#{perl_core}"
       end
       system "make", "swig-pl"
-      system "make", "install-swig-pl", "DESTDIR=#{prefix}"
+      system "make", "install-swig-pl"
 
       # Some of the libraries get installed into the wrong place, they end up having the
       # prefix in the directory name twice.
-
       lib.install Dir["#{prefix}/#{lib}/*"]
     end
 
@@ -211,11 +208,6 @@ class Subversion < Formula
       system "make", "swig-rb", "EXTRA_SWIG_LDFLAGS=-L/usr/lib"
       system "make", "install-swig-rb"
     end
-  end
-
-  test do
-    system "#{bin}/svnadmin", "create", "test"
-    system "#{bin}/svnadmin", "verify", "test"
   end
 
   def caveats
@@ -249,7 +241,12 @@ class Subversion < Formula
       EOS
     end
 
-    return s.empty? ? nil : s
+    s
+  end
+
+  test do
+    system "#{bin}/svnadmin", "create", "test"
+    system "#{bin}/svnadmin", "verify", "test"
   end
 end
 
@@ -258,16 +255,7 @@ diff --git a/configure b/configure
 index 445251b..6ff4332 100755
 --- a/configure
 +++ b/configure
-@@ -10348,7 +10348,7 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
-       case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
- 	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
- 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
--	10.[012]*)
-+	10.[012][,.]*)
- 	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
- 	10.*)
- 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-@@ -25205,6 +25205,8 @@ fi
+@@ -25366,6 +25366,8 @@ fi
  SWIG_CPPFLAGS="$CPPFLAGS"
  
    SWIG_CPPFLAGS=`echo "$SWIG_CPPFLAGS" | $SED -e 's/-no-cpp-precomp //'`
@@ -295,3 +283,17 @@ index a60430b..bd9b017 100644
      INC  => join(' ', $includes, $cppflags,
                   " -I$swig_srcdir/perl/libsvn_swig_perl",
                   " -I$svnlib_srcdir/include",
+
+diff --git a/build/get-py-info.py b/build/get-py-info.py
+index 29a6c0a..dd1a5a8 100644
+--- a/build/get-py-info.py
++++ b/build/get-py-info.py
+@@ -83,7 +83,7 @@ def link_options():
+   options = sysconfig.get_config_var('LDSHARED').split()
+   fwdir = sysconfig.get_config_var('PYTHONFRAMEWORKDIR')
+
+-  if fwdir and fwdir != "no-framework":
++  if fwdir and fwdir != "no-framework" and sys.platform != 'darwin':
+
+     # Setup the framework prefix
+     fwprefix = sysconfig.get_config_var('PYTHONFRAMEWORKPREFIX')

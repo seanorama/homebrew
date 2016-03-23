@@ -2,16 +2,18 @@
 # This is not the same so as a result we must install this as glibtool.
 
 class Libtool < Formula
-  homepage "http://www.gnu.org/software/libtool/"
-  url "http://ftpmirror.gnu.org/libtool/libtool-2.4.4.tar.xz"
-  mirror "https://ftp.gnu.org/gnu/libtool/libtool-2.4.4.tar.xz"
-  sha1 "a62d0f9a5c8ddf2de2a3210a5ab712fd3b4531e9"
+  desc "Generic library support script"
+  homepage "https://www.gnu.org/software/libtool/"
+  url "http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.xz"
+  sha256 "7c87a8c2c8c0fc9cd5019e402bed4292462d00a718a7cd5f11218153bf28b26f"
 
   bottle do
     cellar :any
-    sha1 "ab16612e09788dd35da992db1bdd05e28a457299" => :yosemite
-    sha1 "c7ec9da0dc5103bf21c414299b1accb8c42e23a5" => :mavericks
-    sha1 "f49fc49a492031b657a65ba168ac14a5c3705bdc" => :mountain_lion
+    sha256 "6cb942b57a00f038100af861b4e835a79dae305c13aee550be21b71c4dfc48ed" => :el_capitan
+    sha256 "3b240bf5f3bb91aa3a61d91827573f902da6ba57ca4a0d026e54a789453ac2d7" => :yosemite
+    sha256 "de922636432ee49070e8b5208c095d9c0390781db38c887f77f8b657f4a94e14" => :mavericks
+    sha256 "8508d1f8e6b92dac8418fc881bd3009419a53a7ac15a685ba4eb9e6b7be9e532" => :mountain_lion
   end
 
   keg_only :provided_until_xcode43

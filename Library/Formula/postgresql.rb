@@ -1,15 +1,13 @@
 class Postgresql < Formula
-  homepage "http://www.postgresql.org/"
-
-  stable do
-    url "http://ftp.postgresql.org/pub/source/v9.4.0/postgresql-9.4.0.tar.bz2"
-    sha256 "7a35c3cb77532f7b15702e474d7ef02f0f419527ee80a4ca6036fffb551625a5"
-  end
+  desc "Object-relational database system"
+  homepage "https://www.postgresql.org/"
+  url "https://ftp.postgresql.org/pub/source/v9.5.1/postgresql-9.5.1.tar.bz2"
+  sha256 "6b309d8506a39773a752ff074f47656e5424576ea090b04a24fe1725958c5bd2"
 
   bottle do
-    sha1 "1cf71ee1cfc061cdc82f6164e72ffba1ac8dd8e8" => :yosemite
-    sha1 "9dbd8dc89c4d3d941bc6f5fa34ef0f321f440780" => :mavericks
-    sha1 "efd661ace5a5f2657d047098dec15136aa4f0249" => :mountain_lion
+    sha256 "7887bbb36724ffa5be4948da3a5ef9a50ab81e2cea4f453df1ccb175d1f2b029" => :el_capitan
+    sha256 "609eeb0d8d4b1da00b5c1cc6c7e9794dab770bfea6148ac8d774a1be37fd6181" => :yosemite
+    sha256 "6b268a2203d5fa72d1a2dd2b30e31d06d61917e7fcfaa18ddf761b9ea89253ad" => :mavericks
   end
 
   option "32-bit"
@@ -37,10 +35,15 @@ class Postgresql < Formula
   def install
     ENV.libxml2 if MacOS.version >= :snow_leopard
 
+    ENV.prepend "LDFLAGS", "-L#{Formula["openssl"].opt_lib} -L#{Formula["readline"].opt_lib}"
+    ENV.prepend "CPPFLAGS", "-I#{Formula["openssl"].opt_include} -I#{Formula["readline"].opt_include}"
+
     args = %W[
       --disable-debug
       --prefix=#{prefix}
-      --datadir=#{share}/#{name}
+      --datadir=#{HOMEBREW_PREFIX}/share/postgresql
+      --libdir=#{HOMEBREW_PREFIX}/lib
+      --sysconfdir=#{etc}
       --docdir=#{doc}
       --enable-thread-safety
       --with-bonjour
@@ -53,9 +56,9 @@ class Postgresql < Formula
     ]
 
     args << "--with-python" if build.with? "python"
-    args << "--with-perl" if build.with? "no-perl"
+    args << "--with-perl" if build.with? "perl"
 
-    # The CLT is required to build tcl support on 10.7 and 10.8 because
+    # The CLT is required to build Tcl support on 10.7 and 10.8 because
     # tclConfig.sh is not part of the SDK
     if build.with?("tcl") && (MacOS.version >= :mavericks || MacOS::CLT.installed?)
       args << "--with-tcl"
@@ -69,15 +72,19 @@ class Postgresql < Formula
     args << "--with-uuid=e2fs"
 
     if build.build_32_bit?
-      ENV.append %w{CFLAGS LDFLAGS}, "-arch #{Hardware::CPU.arch_32_bit}"
+      ENV.append %w[CFLAGS LDFLAGS], "-arch #{Hardware::CPU.arch_32_bit}"
     end
 
     system "./configure", *args
-    system "make", "install-world"
+    system "make"
+    system "make", "install-world", "datadir=#{pkgshare}",
+                                    "libdir=#{lib}",
+                                    "pkglibdir=#{lib}/postgresql"
   end
 
   def post_install
-    unless File.exist? "#{var}/postgres"
+    (var/"postgres").mkpath
+    unless File.exist? "#{var}/postgres/PG_VERSION"
       system "#{bin}/initdb", "#{var}/postgres"
     end
   end
@@ -87,8 +94,14 @@ class Postgresql < Formula
     you may need to remove the previous version first. See:
       https://github.com/Homebrew/homebrew/issues/2510
 
-    To migrate existing data from a previous major version (pre-9.4) of PostgreSQL, see:
-      http://www.postgresql.org/docs/9.4/static/upgrading.html
+    To migrate existing data from a previous major version (pre-9.0) of PostgreSQL, see:
+      http://www.postgresql.org/docs/9.5/static/upgrading.html
+
+    To migrate existing data from a previous minor version (9.0-9.4) of PosgresSQL, see:
+      http://www.postgresql.org/docs/9.5/static/pgupgrade.html
+
+      You will need your previous PostgreSQL installation from brew to perform `pg_upgrade`.
+      Do not run `brew cleanup postgresql` until you have performed the migration.
     EOS
   end
 
@@ -123,6 +136,9 @@ class Postgresql < Formula
   end
 
   test do
-    system "#{bin}/initdb", testpath
+    system "#{bin}/initdb", testpath/"test"
+    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql", shell_output("#{bin}/pg_config --sharedir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/lib", shell_output("#{bin}/pg_config --libdir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql", shell_output("#{bin}/pg_config --pkglibdir").chomp
   end
 end

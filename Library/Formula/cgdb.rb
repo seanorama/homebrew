@@ -1,14 +1,14 @@
-require "formula"
-
 class Cgdb < Formula
-  homepage "http://cgdb.github.io/"
-  url "http://cgdb.me/files/cgdb-0.6.7.tar.gz"
-  sha1 "5e29e306502888dd660a9dd55418e5c190ac75bb"
+  desc "Curses-based interface to the GNU Debugger"
+  homepage "https://cgdb.github.io/"
+  url "http://cgdb.me/files/cgdb-0.6.8.tar.gz"
+  sha256 "be203e29be295097439ab67efe3dc8261f742c55ff3647718d67d52891f4cf41"
 
   bottle do
-    sha1 "97d618f51a59e82d00e9957e545cbf8c55430919" => :mavericks
-    sha1 "4d54ccc422b20a5d5a2bb426dab38ed6f0fbb357" => :mountain_lion
-    sha1 "3e2bdb1a3bf2e11741df63c3d13069c844208a2c" => :lion
+    sha256 "8d47a315bc04053f84802069723edf9ea920c7361464992c1a657f41db52f901" => :el_capitan
+    sha256 "b105849b8556fbe4badea662619525b3c0d5d3fd46738e3c7257e6250c7107dd" => :yosemite
+    sha256 "87938fedfd548c40fd567e07e0e277f71a5ca69218e741975bcbeb104a4108d8" => :mavericks
+    sha256 "218acd2aa10e805643898b5b04da0022b9b1e7186519493c80b26a14e13203ba" => :mountain_lion
   end
 
   head do
@@ -16,17 +16,16 @@ class Cgdb < Formula
 
     depends_on "autoconf" => :build
     depends_on "automake" => :build
-    depends_on "help2man" => :build
   end
 
+  depends_on "help2man" => :build
   depends_on "readline"
 
   def install
     system "sh", "autogen.sh" if build.head?
-
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
-                          "--with-readline=#{Formula['readline'].opt_prefix}"
-    system "make install"
+                          "--with-readline=#{Formula["readline"].opt_prefix}"
+    system "make", "install"
   end
 end

@@ -1,20 +1,28 @@
-require "formula"
-
 class Jenkins < Formula
+  desc "Extendable open source continuous integration server"
   homepage "https://jenkins-ci.org"
-  url "http://mirrors.jenkins-ci.org/war/1.596/jenkins.war"
-  sha1 "82b77e3a34a6a5f2a35ce1e75dee0e9730b1fdc0"
+  url "http://mirrors.jenkins-ci.org/war/1.653/jenkins.war"
+  sha256 "48e33fab851459c0e81fc2d6f36f1795490d862d1d1f3d3a79c46c945bdb44fc"
 
-  head "https://github.com/jenkinsci/jenkins.git"
+  head do
+    url "https://github.com/jenkinsci/jenkins.git"
+    depends_on "maven" => :build
+  end
+
+  bottle :unneeded
+
+  depends_on :java => "1.7+"
 
   def install
     if build.head?
-      system "mvn clean install -pl war -am -DskipTests"
-      libexec.install "war/target/jenkins.war", "."
+      ENV.java_cache
+      system "mvn", "clean", "install", "-pl", "war", "-am", "-DskipTests"
     else
-      libexec.install "jenkins.war"
+      system "jar", "xvf", "jenkins.war"
     end
+    libexec.install Dir["**/jenkins.war", "**/jenkins-cli.jar"]
     bin.write_jar_script libexec/"jenkins.war", "jenkins"
+    bin.write_jar_script libexec/"jenkins-cli.jar", "jenkins-cli"
   end
 
   plist_options :manual => "jenkins"
@@ -44,6 +52,21 @@ class Jenkins < Formula
 
   def caveats; <<-EOS.undent
     Note: When using launchctl the port will be 8080.
-    EOS
+  EOS
+  end
+
+  test do
+    ENV["JENKINS_HOME"] = testpath
+    pid = fork do
+      exec "#{bin}/jenkins"
+    end
+    sleep 60
+
+    begin
+      assert_match /"mode":"NORMAL"/, shell_output("curl localhost:8080/api/json")
+    ensure
+      Process.kill("SIGINT", pid)
+      Process.wait(pid)
+    end
   end
 end
